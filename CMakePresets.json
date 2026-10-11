@@ -10,8 +10,8 @@
       "cacheVariables": {
         "CMAKE_C_COMPILER": "cl.exe",
         "CMAKE_CXX_COMPILER": "cl.exe",
-        "MAYASDK_INCLUDE_DIR": "Y:/Autodesk_Maya_2025_DEVKIT_Windows/devkitBase/include",
-        "MAYASDK_LIBRARY_DIR": "Y:/Autodesk_Maya_2025_DEVKIT_Windows/devkitBase/lib"
+        "MAYASDK_INCLUDE_DIR": "Y:/Autodesk_Maya_2025_DEVKIT_Windows/devkitBase/include/",
+        "MAYASDK_LIBRARY_DIR": "Y:/Autodesk_Maya_2025_DEVKIT_Windows/devkitBase/lib/"
       },
       "condition": {
         "type": "equals",
