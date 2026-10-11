@@ -4,7 +4,6 @@
 
 namespace XpsImport
 {
-
 	static std::unordered_map<int, std::string> flagList = {
 		{0, BACK_FACE_CULLING},
 		{1, ALWAYS_FORCE_CULLING},

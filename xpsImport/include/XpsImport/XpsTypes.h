@@ -51,4 +51,15 @@ namespace XpsImport
 		int gloss = 10;
 		bool hasBoneDirections = false;
 	};
+
+	struct XpsTexture
+	{
+		uint32_t id = 0;
+		std::string file = std::string();
+		uint32_t uvLayer = 0;
+	};
+
+	struct XpsVertex
+	{
+	};
 }
