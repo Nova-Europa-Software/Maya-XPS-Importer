@@ -1,5 +1,6 @@
 #pragma once
 #include "XpsCore.h"
+#include "XpsBinUtils.h"
 
 namespace XpsImport
 {
