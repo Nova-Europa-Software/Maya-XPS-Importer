@@ -43,37 +43,51 @@ namespace XpsImport
 			return result;
 		}
 
+		// Read XPS file version
 		fileStream.read((char*)&result.versionMajor, sizeof(uint16_t));
 		fileStream.read((char*)&result.versionMinor, sizeof(uint16_t));
 
+		// Read XNA aral string
 		std::optional<std::string> xnaAral = readString(fileStream);
 		if (xnaAral.has_value()) 
 			result.xnaAral = xnaAral.value();
 
+		// Read settings length
 		fileStream.read((char*)&result.settingsLen, sizeof(uint32_t));
 
+		// Read machine name (computer name that the model was created on)
 		std::optional<std::string> machine = readString(fileStream);
 		if (machine.has_value())
 			result.machine = machine.value();
 
+		// Read user name
 		std::optional<std::string> userName = readString(fileStream);
 		if (userName.has_value())
 			result.user = userName.value();
 
+		// Read referenced files
 		std::optional<std::string> filesString = readString(fileStream);
 		if (filesString.has_value())
 			result.files = filesString.value();
 
+		// Determine how to read additional data based on file version
 		bool hasTangent = hasTangentVersion(result.versionMajor, result.versionMinor);
 
 		if (hasTangent)
 		{
+#ifdef _DEBUG
+			MGlobal::displayInfo("hasTangent was set to TRUE");
+#endif
 			std::string settingsStr = std::string();
 			settingsStr.resize(result.settingsLen * 4);
 			fileStream.read((char*)settingsStr.data(), sizeof(result.settingsLen * 4));
 		}
 		else
 		{
+#ifdef _DEBUG
+			MGlobal::displayInfo("hasTangent was set to FALSE");
+#endif
+
 			uint16_t valuesRead = 0;
 			
 			uint32_t hash = 0;
@@ -83,6 +97,14 @@ namespace XpsImport
 			uint32_t items = 0;
 			fileStream.read((char*)&items, sizeof(uint32_t));
 			valuesRead += sizeof(uint32_t);
+
+#ifdef _DEBUG
+			MString hashStr(std::to_string(hash).c_str());
+			MString itemsStr(std::to_string(items).c_str());
+
+			MGlobal::displayInfo("Hash resolved to " + hashStr);
+			MGlobal::displayInfo("Item count set to " + itemsStr);
+#endif
 			
 			for (size_t i = 0; i < items; i++)
 			{
@@ -97,6 +119,16 @@ namespace XpsImport
 				uint32_t optInfo = 0;
 				fileStream.read((char*)&optInfo, sizeof(uint32_t));
 				valuesRead += sizeof(uint32_t);
+
+#ifdef _DEBUG
+				MString typeStr(std::to_string(optType).c_str());
+				MString countStr(std::to_string(optCount).c_str());
+				MString infoStr(std::to_string(optInfo).c_str());
+
+				MGlobal::displayInfo("optType set to " + typeStr);
+				MGlobal::displayInfo("optCount set to " + countStr);
+				MGlobal::displayInfo("optInfo set to " + infoStr);
+#endif
 
 				if (optType == 0)
 				{
@@ -133,6 +165,27 @@ namespace XpsImport
 			}
 
 		}
+
+#ifdef _DEBUG
+		MString mnStr(std::to_string(magic_number).c_str());
+		MString vmjStr(std::to_string(result.versionMajor).c_str());
+		MString vmiStr(std::to_string(result.versionMinor).c_str());
+		MString xnaAralStr(result.xnaAral.c_str());
+		MString slenStr(std::to_string(result.settingsLen).c_str());
+		MString machineStr(result.machine.c_str());
+		MString userStr(result.user.c_str());
+		MString filesStr(result.files.c_str());
+
+		MGlobal::displayInfo("XPS Header info: ");
+		MGlobal::displayInfo("Magic number = " + mnStr);
+		MGlobal::displayInfo("Version major = " + vmjStr);
+		MGlobal::displayInfo("Version minor = " + vmiStr);
+		MGlobal::displayInfo("XNAaral = " + xnaAralStr);
+		MGlobal::displayInfo("Settings length = " + slenStr);
+		MGlobal::displayInfo("Machine = " + machineStr);
+		MGlobal::displayInfo("User = " + userStr);
+		MGlobal::displayInfo("Files = " + filesStr);
+#endif
 
 		return result;
 	}
@@ -205,6 +258,10 @@ namespace XpsImport
 
 	XpsFlags XpsBinUtils::readFlags(std::ifstream& fileStream, uint32_t optCount)
 	{
+#ifdef _DEBUG
+		MGlobal::displayInfo("Reading flags...");
+#endif
+
 		XpsFlags flags = {};
 		for (size_t i = 0; i < optCount; i++)
 		{
@@ -216,39 +273,67 @@ namespace XpsImport
 
 			if (flagList.find(flag) != flagList.end())
 			{
+#ifdef _DEBUG
+				MString valueStr(std::to_string(flagValue(flag, value)).c_str());
+#endif
+
 				std::string flagName = flagList[flag];
 				switch (flag)
 				{
 				case 0: // Back face culling 
 					flags.backFaceCulling = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Back face culling set to " + valueStr);
+#endif
 					break;
 
 				case 1: // Always force culling
 					flags.alwaysForceCulling = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Always force culling set to " + valueStr);
+#endif
 					break;
 
 				case 2: // Model cast shadows
 					flags.modelCastShadows = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Model cast shadows set to " + valueStr);
+#endif
 					break;
 
 				case 3: // Tangent space red
 					flags.tangentSpaceRed = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Tangent space red set to " + valueStr);
+#endif
 					break;
 
 				case 4: // Tangent space green
 					flags.tangentSpaceGreen = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Tangent space green set to " + valueStr);
+#endif
 					break;
 
 				case 5: // Tangent space blue
 					flags.tangentSpaceBlue = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Tangent space blue set to " + valueStr);
+#endif
 					break;
 
 				case 6: // Gloss
 					flags.gloss = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Gloss set to " + valueStr);
+#endif
 					break;
 
 				case 7: // Has bone directions
 					flags.hasBoneDirections = flagValue(flag, value);
+#ifdef _DEBUG
+					MGlobal::displayInfo("Has bone directions set to " + valueStr);
+#endif
 					break;
 
 				default:
