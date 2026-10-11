@@ -10,3 +10,7 @@
 *.pdb
 *.ilk
 *.exp
+
+# CMake build directory
+out
+build
