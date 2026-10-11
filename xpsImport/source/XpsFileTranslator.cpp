@@ -29,7 +29,7 @@ namespace XpsImport
 			return MS::kFailure;
 		}
 
-
+		std::vector<XpsBone> bones = XpsBinUtils::readBones(inFile, header.value());
 
 		MGlobal::displayInfo("Import successful!");
 		return MS::kSuccess;
