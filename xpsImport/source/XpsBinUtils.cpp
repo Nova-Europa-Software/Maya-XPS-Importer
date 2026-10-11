@@ -433,4 +433,58 @@ namespace XpsImport
 
 		return result;
 	}
+
+	std::vector<XpsBone> XpsBinUtils::readBones(std::ifstream& fileStream, XpsHeader& header)
+	{
+		std::vector<XpsBone> bones;
+
+		uint32_t boneCount = 0;
+		fileStream.read((char*)&boneCount, sizeof(uint32_t));
+
+		for (size_t i = 0; i < boneCount; i++)
+		{
+			std::string boneName = std::string();
+
+			std::optional<std::string> nameOpt = readString(fileStream);
+			if (nameOpt.has_value())
+				boneName = nameOpt.value();
+			else
+				boneName = "Bone_" + std::to_string(i);
+
+			uint16_t parentId = 0;
+			fileStream.read((char*)&parentId, sizeof(uint16_t));
+
+			XpsVector3 coord = {};
+			fileStream.read((char*)&coord.x, sizeof(float));
+			fileStream.read((char*)&coord.y, sizeof(float));
+			fileStream.read((char*)&coord.z, sizeof(float));
+
+			XpsBone bone = {};
+			bone.id = i;
+			bone.parentId = parentId;
+			bone.name = boneName;
+			bone.co = coord;
+
+			bones.push_back(bone);
+
+#ifdef _DEBUG
+			MString xStr(std::to_string(coord.x).c_str());
+			MString yStr(std::to_string(coord.y).c_str());
+			MString zStr(std::to_string(coord.z).c_str());
+			MString boneNameStr(boneName.c_str());
+			MString boneIdStr(std::to_string(i).c_str());
+			MString parentIdStr(std::to_string(parentId).c_str());
+
+			MGlobal::displayInfo("Bone appended!");
+			MGlobal::displayInfo("Bone name = " + boneNameStr);
+			MGlobal::displayInfo("Bone id = " + boneIdStr);
+			MGlobal::displayInfo("Parent bone id = " + parentIdStr);
+			MGlobal::displayInfo("Bone coord X = " + xStr);
+			MGlobal::displayInfo("Bone coord Y = " + yStr);
+			MGlobal::displayInfo("Bone coord Z = " + zStr);
+#endif
+		}
+
+		return bones;
+	}
 }

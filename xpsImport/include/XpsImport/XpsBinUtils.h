@@ -19,7 +19,7 @@ namespace XpsImport
 	class XpsBinUtils
 	{
 	public:
-		std::vector<XpsBone> readBones();
+		std::vector<XpsBone> readBones(std::ifstream& fileStream, XpsHeader& header);
 		static std::optional<XpsHeader> findHeader(std::ifstream& fileStream);
 		static std::optional<std::string> readString(std::ifstream& fileStream);
 

@@ -14,7 +14,7 @@ namespace XpsImport
 	{
 		uint32_t id = 0;
 		std::string name = std::string();
-		uint32_t co = 0;
+		XpsVector3 co = {};
 		uint32_t parentId = 0;
 	};
 
