@@ -1,0 +1,12 @@
+# Visual Studio cache files
+.vs
+
+# Compiled binaries
+*.dll
+*.lib
+*.exe
+
+# Debug and intermediate files
+*.pdb
+*.ilk
+*.exp
