@@ -14,14 +14,15 @@ namespace XpsImport
 		{
 			MGlobal::displayInfo("XPS header found!");
 			result = readHeader(fileStream);
+			return result;
 		}
 		else
 		{
-			MString expectedStr(std::to_string(XPS_MAGIC_NUMBER).c_str());
 			MString recievedStr(std::to_string(magic_number).c_str());
+			MString expectedStr(std::to_string(XPS_MAGIC_NUMBER).c_str());
 
 			MGlobal::displayWarning("Invalid magic number, expected " + expectedStr + ", got " + recievedStr);
-			return result;
+			return {};
 		}
 
 		return {};

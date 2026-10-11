@@ -9,7 +9,7 @@ namespace XpsImport
 
 	MStatus XpsFileTranslator::reader(const MFileObject& file, const MString& options, FileAccessMode mode)
 	{
-		MString path = file.fullName();
+		MString path = file.resolvedFullName();
 
 		std::ifstream inFile(path.asChar(), std::ios::binary);
 
@@ -18,6 +18,8 @@ namespace XpsImport
 			MGlobal::displayError("Cannot open file.");
 			return MS::kFailure;
 		}
+
+		MGlobal::displayInfo("File " + path + " opened!");
 
 		std::optional<XpsHeader> header = XpsBinUtils::findHeader(inFile);
 
