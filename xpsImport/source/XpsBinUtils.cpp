@@ -4,22 +4,41 @@
 
 namespace XpsImport
 {
+
+	/**
+	 * @brief Looks if the magic number signature that is at the beggining of each XPS file.
+	 *
+	 * Checks for magic number signature (323232) that should be at the beggining of
+	 * every XPS file. If signature is found indicating that an XPS file was provided
+	 * a call to @b readHeader() function is made. 
+	 *
+	 * @param fileStream a std::ifstream of an currently parsed XPS file.
+	 *
+	 * @return A XpsHeader structure filled with parsed header data upon succes or
+	 * an empty optional upon failure.
+	 * 
+	 * @see readHeader
+	*/
 	std::optional<XpsHeader> XpsBinUtils::findHeader(std::ifstream& fileStream)
 	{
 		XpsHeader result = {};
 
+		// Read first 4 bytes from the file
 		uint32_t magic_number = 0;
 		fileStream.read((char*)&magic_number, sizeof(uint32_t));
 		fileStream.seekg(0);
 
+		// Check read bytes against expected signature (323232)
 		if (magic_number == XPS_MAGIC_NUMBER)
 		{
+			// If signature matches expected value begin parsing the header
 			MGlobal::displayInfo("XPS header found!");
 			result = readHeader(fileStream);
 			return result;
 		}
 		else
 		{
+			// Otherwise print error message and return empty optional
 			MString recievedStr(std::to_string(magic_number).c_str());
 			MString expectedStr(std::to_string(XPS_MAGIC_NUMBER).c_str());
 
@@ -27,9 +46,24 @@ namespace XpsImport
 			return {};
 		}
 
+		// In case if we go outside of if-else block return empty optional
+		// (though this should not happen)
 		return {};
 	}
 
+	/**
+	 * @brief Reads and parses the data from XPS header.
+	 * 
+	 * Reads and parses (in this order) magic number, XPS file version, XNAaral string,
+	 * settings length (in bytes), machine name and user name of the XPS file creator
+	 * and all referenced files. Later, checks if file contains tangent data (appears only
+	 * in certain versions), then reads and parses additional flags (culling, shadow casting,
+	 * tangent space, glossines, etc.)
+	 * 
+	 * @return Returns an parsed header as XpsHeader struct.
+	 * 
+	 * @see hasTangentVersion
+	*/
 	XpsHeader XpsBinUtils::readHeader(std::ifstream& fileStream)
 	{
 		XpsHeader result = {};
@@ -80,6 +114,8 @@ namespace XpsImport
 #ifdef _DEBUG
 			MGlobal::displayInfo("hasTangent was set to TRUE");
 #endif
+			// If hasTangent is set to true read additional data so the
+			// file stream is in correct place later, but don't parse the data.
 			std::string settingsStr = std::string();
 			settingsStr.resize(result.settingsLen * 4);
 			fileStream.read((char*)settingsStr.data(), sizeof(result.settingsLen * 4));
