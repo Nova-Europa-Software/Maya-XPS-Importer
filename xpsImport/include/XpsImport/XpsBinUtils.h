@@ -21,6 +21,7 @@ namespace XpsImport
 		static std::vector<XpsBone> readBones(std::ifstream& fileStream, XpsHeader& header);
 		static std::optional<XpsHeader> findHeader(std::ifstream& fileStream);
 		static std::optional<std::string> readString(std::ifstream& fileStream);
+		static std::vector<XpsMesh> readMeshes(std::ifstream& fileStream, std::optional<XpsHeader> headerOpt, bool hasBones);
 
 	private:
 		static XpsHeader readHeader(std::ifstream& fileStream);
@@ -32,6 +33,7 @@ namespace XpsImport
 		static std::unordered_map<std::string, XpsBonePose> poseData(std::string poseString);
 		static std::vector<std::string> splitStringByChar(const std::string& s, char c);
 		static std::vector<char> fillArray(const std::vector<char>& array, uint32_t minLength, char value);
+		static bool hasVariableWeights(uint32_t verMajor, uint32_t verMinor, bool hasHeader);
 	};
 
 	

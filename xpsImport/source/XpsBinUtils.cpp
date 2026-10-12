@@ -1,4 +1,6 @@
 #include <XpsImport/XpsBinUtils.h>
+#include <fstream>
+#include <vector>
 
 namespace XpsImport
 {
@@ -486,5 +488,104 @@ namespace XpsImport
 		}
 
 		return bones;
+	}
+
+	std::vector<XpsMesh> XpsBinUtils::readMeshes(std::ifstream& fileStream, std::optional<XpsHeader> headerOpt, bool hasBones)
+	{
+		std::vector<XpsMesh> meshes = std::vector<XpsMesh>();
+
+		uint32_t meshCount = 0;
+		fileStream.read((char*)&meshCount, sizeof(uint32_t));
+
+		uint32_t verMajor = 0;
+		uint32_t verMinor = 0;
+
+		if(headerOpt.has_value())
+		{
+			XpsHeader header = headerOpt.value();
+			verMajor = header.versionMajor;
+			verMinor = header.versionMinor;
+		}
+
+		bool hasTangent = hasTangentVersion(verMajor, verMinor, headerOpt.has_value());
+		bool hasVWeights = hasVariableWeights(verMajor, verMinor, headerOpt.has_value());
+		
+		for(size_t i = 0; i < meshCount; i++)
+		{
+			std::string meshName = readString(fileStream);
+			if(meshName.empty())
+				meshName = "Mesh_" + std::to_string(i);
+
+			uint32_t uvLayerCount = 0;
+			fileStream.read((char*)&uvLayerCount, sizeof(uint32_t));
+
+			uint32_t textureCount = 0;
+			fileStream.read((char*)&textureCount, sizeof(uint32_t));
+
+			std::vector<XpsTexture> textures = std::vector<XpsTexture>(textureCount);
+
+			for(size_t j = 0; j < textureCount; j++)
+			{
+				std::string texturePath = readString(fileStream);
+				uint32_t uvLayerId = 0;
+				fileStream.read((char*)&uvLayerId, sizeof(uint32_t));
+				
+				XpsTexture tex = {};
+				tex.id = j;
+				tex.file = texturePath;
+				tex.uvLayer = uvLayerId;
+
+				textures[j] = tex;
+			}
+
+			uint32_t vertexCount = 0;
+			fileStream.read((char*)&vertexCount, sizeof(uint32_t));
+
+			for(size_t j = 0; j < vertexCount; j++)
+			{
+				XpsVector3 coord = {};
+				fileStream.read((char*)&coord.x, sizeof(float));
+				fileStream.read((char*)&coord.y, sizeof(float));
+				fileStream.read((char*)&coord.z, sizeof(float));
+
+				XpsVector3 normal = {};
+				fileStream.read((char*)&normal.x, sizeof(float));
+				fileStream.read((char*)&normal.y, sizeof(float));
+				fileStream.read((char*)&normal.z, sizeof(float));
+
+				std::vector<XpsVector2> uvs = std::vector<XpsVector2>(uvLayerCount);
+
+				for(size_t k = 0; k < uvLayerCount; k++)
+				{
+					XpsVector2 uv = {};
+					fileStream.read((char*)&uv.x, sizeof(float));
+					fileStream.read((char*)&uv.y, sizeof(float));
+
+					uvs[k] = uv;
+
+					if(hasTangent)
+					{
+						XpsVector4 tangent = {};
+						fileStream.read((char*)&tangent.x, sizeof(float));
+						fileStream.read((char*)&tangent.y, sizeof(float));
+						fileStream.read((char*)&tangent.z, sizeof(float));
+						fileStream.read((char*)&tangent.w, sizeof(float));
+					}
+
+					if(hasBones)
+					{
+						uint16_t weightCount = 4;
+						if(hasVariableWeights)
+							fileStream.read((char*)&weightCount, sizeof(uint16_t));
+					}
+				}
+			}
+		}
+	
+	}
+
+	bool XpsBinUtils::hasVariableWeights(uint32_t verMajor, uint32_t verMinor, bool hasHeader)
+	{
+		return (verMajor >= 3) && hasHeader;
 	}
 }
