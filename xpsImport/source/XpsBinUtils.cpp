@@ -512,8 +512,12 @@ namespace XpsImport
 		
 		for(size_t i = 0; i < meshCount; i++)
 		{
-			std::string meshName = readString(fileStream);
-			if(meshName.empty())
+			std::optional<std::string> meshStr = readString(fileStream);
+			std::string meshName = std::string();
+			
+			if (meshStr.has_value())
+				meshName = meshStr.value();
+			else
 				meshName = "Mesh_" + std::to_string(i);
 
 			uint32_t uvLayerCount = 0;
@@ -526,14 +530,16 @@ namespace XpsImport
 
 			for(size_t j = 0; j < textureCount; j++)
 			{
-				std::string texturePath = readString(fileStream);
+				std::optional<std::string> textureStr = readString(fileStream);
+
 				uint32_t uvLayerId = 0;
 				fileStream.read((char*)&uvLayerId, sizeof(uint32_t));
 				
 				XpsTexture tex = {};
 				tex.id = j;
-				tex.file = texturePath;
 				tex.uvLayer = uvLayerId;
+				if(textureStr.has_value())
+					tex.file = textureStr.value();
 
 				textures[j] = tex;
 			}
@@ -582,6 +588,8 @@ namespace XpsImport
 			}
 		}
 	
+		return meshes;
+
 	}
 
 	bool XpsBinUtils::hasVariableWeights(uint32_t verMajor, uint32_t verMinor, bool hasHeader)
