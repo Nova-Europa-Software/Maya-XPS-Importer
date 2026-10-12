@@ -497,6 +497,11 @@ namespace XpsImport
 		uint32_t meshCount = 0;
 		fileStream.read((char*)&meshCount, sizeof(uint32_t));
 
+#ifdef _DEBUG
+		MString meshCountStr(std::to_string(meshCount).c_str());
+		MGlobal::displayInfo("Mesh count = " + meshCountStr);
+#endif
+
 		uint32_t verMajor = 0;
 		uint32_t verMinor = 0;
 
@@ -509,9 +514,19 @@ namespace XpsImport
 
 		bool hasTangent = hasTangentVersion(verMajor, verMinor, headerOpt.has_value());
 		bool hasVWeights = hasVariableWeights(verMajor, verMinor, headerOpt.has_value());
+
+#ifdef _DEBUG
+		if (hasTangent) MGlobal::displayInfo("hasTangent set to true!");
+		else MGlobal::displayInfo("hasTangent set to false!");
+
+		if (hasVWeights) MGlobal::displayInfo("hasVariableWeights set to true!");
+		else MGlobal::displayInfo("hasVariableWeights set to false!");
+#endif
 		
 		for(size_t i = 0; i < meshCount; i++)
 		{
+			XpsMesh mesh = {};
+
 			std::optional<std::string> meshStr = readString(fileStream);
 			std::string meshName = std::string();
 			
@@ -520,11 +535,25 @@ namespace XpsImport
 			else
 				meshName = "Mesh_" + std::to_string(i);
 
+			mesh.name = meshName;
+
 			uint32_t uvLayerCount = 0;
 			fileStream.read((char*)&uvLayerCount, sizeof(uint32_t));
 
 			uint32_t textureCount = 0;
 			fileStream.read((char*)&textureCount, sizeof(uint32_t));
+
+#ifdef _DEBUG
+			MString meshNameStr(meshName.c_str());
+			MString meshIdStr(std::to_string(i).c_str());
+			MString uvlCountStr(std::to_string(uvLayerCount).c_str());
+			MString texCountStr(std::to_string(textureCount).c_str());
+
+			MGlobal::displayInfo("Mesh id = " + meshIdStr);
+			MGlobal::displayInfo("Mesh name = " + meshNameStr);
+			MGlobal::displayInfo("UV Layer count = " + uvlCountStr);
+			MGlobal::displayInfo("Texture count = " + texCountStr);
+#endif
 
 			std::vector<XpsTexture> textures = std::vector<XpsTexture>(textureCount);
 
@@ -538,8 +567,15 @@ namespace XpsImport
 				XpsTexture tex = {};
 				tex.id = j;
 				tex.uvLayer = uvLayerId;
-				if(textureStr.has_value())
+				if (textureStr.has_value())
 					tex.file = textureStr.value();
+				else
+					tex.file = "texture_" + std::to_string(j);
+
+#ifdef _DEBUG
+				MString texStr(tex.file.c_str());
+				MGlobal::displayInfo("Found related texture: " + texStr);
+#endif
 
 				textures[j] = tex;
 			}
@@ -547,8 +583,15 @@ namespace XpsImport
 			uint32_t vertexCount = 0;
 			fileStream.read((char*)&vertexCount, sizeof(uint32_t));
 
+#ifdef _DEBUG
+			MString vertCountStr(std::to_string(vertexCount).c_str());
+			MGlobal::displayInfo("Mesh vertex count: " + vertCountStr);
+#endif
+
 			for(size_t j = 0; j < vertexCount; j++)
 			{
+				XpsVertex vertex;
+
 				XpsVector3 coord = {};
 				fileStream.read((char*)&coord.x, sizeof(float));
 				fileStream.read((char*)&coord.y, sizeof(float));
@@ -558,6 +601,12 @@ namespace XpsImport
 				fileStream.read((char*)&normal.x, sizeof(float));
 				fileStream.read((char*)&normal.y, sizeof(float));
 				fileStream.read((char*)&normal.z, sizeof(float));
+
+				XpsCVector4 color = {};
+				fileStream.read((char*)&color.x, sizeof(int8_t));
+				fileStream.read((char*)&color.y, sizeof(int8_t));
+				fileStream.read((char*)&color.z, sizeof(int8_t));
+				fileStream.read((char*)&color.w, sizeof(int8_t));
 
 				std::vector<XpsVector2> uvs = std::vector<XpsVector2>(uvLayerCount);
 
@@ -577,15 +626,107 @@ namespace XpsImport
 						fileStream.read((char*)&tangent.z, sizeof(float));
 						fileStream.read((char*)&tangent.w, sizeof(float));
 					}
-
-					if(hasBones)
-					{
-						uint16_t weightCount = 4;
-						if(hasVariableWeights)
-							fileStream.read((char*)&weightCount, sizeof(uint16_t));
-					}
 				}
+
+				std::vector<XpsBoneWeight> boneWeightsVec = std::vector<XpsBoneWeight>();
+
+				if (hasBones)
+				{
+					std::vector<uint16_t> boneIds = std::vector<uint16_t>();
+					std::vector<float> boneWeight = std::vector<float>();
+
+					int16_t weightCount = 4;
+					if (hasVWeights)
+						fileStream.read((char*)&weightCount, sizeof(int16_t));
+
+#ifdef _DEBUG
+					MString weightCountStr(std::to_string(weightCount).c_str());
+					MGlobal::displayInfo("Vertex weight count = " + weightCountStr);
+#endif
+					if (weightCount >= 0)
+					{
+						boneIds.resize(weightCount);
+						boneWeight.resize(weightCount);
+					}
+
+					for (size_t k = 0; k < weightCount; k++)
+					{
+						int16_t bone_id = 0;
+						float weight = 0.0f;
+						fileStream.read((char*)&bone_id, sizeof(int16_t));
+						fileStream.read((char*)&weight, sizeof(float));
+
+#ifdef _DEBUG
+						if (k >= boneIds.size())
+						{
+							MGlobal::displayError("k >= boneIds.size(); k out of vector range!");
+						}
+						else
+						{
+							boneIds[k] = bone_id;
+							boneWeight[k] = weight;
+						}
+#else
+						boneIds[k] = bone_id;
+						boneWeight[k] = weight;
+#endif
+					}
+
+#ifdef _DEBUG
+					if (boneIds.size() != boneWeight.size())
+					{
+						MGlobal::displayError("boneIds.size() != boneWeight.size()");
+					}
+					else
+					{
+						for (size_t k = 0; k < boneIds.size(); k++)
+						{
+							XpsBoneWeight bw = {};
+							bw.id = boneIds[k];
+							bw.weight = boneWeight[k];
+							boneWeightsVec.push_back(bw);
+						}
+					}
+#else
+					for (size_t k = 0; k < boneIds.size(); k++)
+					{
+						XpsBoneWeight bw = {};
+						bw.id = boneIds[k];
+						bw.weight = boneWeight[k];
+						boneWeightsVec.push_back(bw);
+					}
+#endif
+
+				}
+
+				vertex.coordDelta = coord;
+				vertex.normal = normal;
+				vertex.color = color;
+				vertex.boneWeights = boneWeightsVec;
+				vertex.uv = uvs;
+
+				mesh.vertices.push_back(vertex);
+			}			
+
+			uint32_t triCount = 0;
+			fileStream.read((char*)&triCount, sizeof(uint32_t));
+
+			std::vector<XpsIuVector3> faces(triCount);
+
+			for (size_t j = 0; j < triCount; j++)
+			{
+				XpsIuVector3 triIds = {};
+
+				fileStream.read((char*)&triIds.x, sizeof(uint32_t));
+				fileStream.read((char*)&triIds.y, sizeof(uint32_t));
+				fileStream.read((char*)&triIds.z, sizeof(uint32_t));
+
+				faces.push_back(triIds);
 			}
+
+			mesh.faces = faces;
+
+			meshes.push_back(mesh);
 		}
 	
 		return meshes;

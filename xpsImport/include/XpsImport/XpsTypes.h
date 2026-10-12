@@ -16,12 +16,35 @@ namespace XpsImport
 		float z = 0;
 	};
 
+	struct XpsIuVector3
+	{
+		uint32_t x;
+		uint32_t y;
+		uint32_t z;
+	};
+
 	struct XpsVector4
 	{
 		float x = 0;
 		float y = 0;
 		float z = 0;
 		float w = 0;
+	};
+
+	struct XpsIuVector4
+	{
+		uint32_t x;
+		uint32_t y;
+		uint32_t z;
+		uint32_t w;
+	};
+
+	struct XpsCVector4
+	{
+		int8_t x;
+		int8_t y;
+		int8_t z;
+		int8_t w;
 	};
 
 	struct XpsBone
@@ -73,14 +96,20 @@ namespace XpsImport
 		uint32_t uvLayer = 0;
 	};
 
+	struct XpsBoneWeight
+	{
+		uint16_t id = 0;
+		float weight = 0.0f;
+	};
+
 	struct XpsVertex
 	{
 		uint32_t id = {};
 		XpsVector3 coordDelta = {};
 		XpsVector3 normal = {};
-		XpsVector2 uv = {};
-		XpsVector3 color = {};
-		XpsVector4 boneWeights = {};
+		std::vector<XpsVector2> uv = {};
+		XpsCVector4 color = {};
+		std::vector<XpsBoneWeight> boneWeights = {};
 		bool merged = false;
 	};
 
@@ -89,7 +118,7 @@ namespace XpsImport
 		std::string name = std::string();
 		std::vector<XpsTexture> textures = std::vector<XpsTexture>();
 		std::vector<XpsVertex> vertices = std::vector<XpsVertex>();
-		std::vector<uint32_t> indices = std::vector<uint32_t>();
+		std::vector<XpsIuVector3> faces = std::vector<XpsIuVector3>();
 		size_t uvCount = 0;
 	};
 }
