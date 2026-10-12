@@ -3,11 +3,25 @@
 
 namespace XpsImport
 {
+	struct XpsVector2
+	{
+		float x = 0;
+		float y = 0;
+	};
+
 	struct XpsVector3
 	{
-		float x;
-		float y;
-		float z;
+		float x = 0;
+		float y = 0;
+		float z = 0;
+	};
+
+	struct XpsVector4
+	{
+		float x = 0;
+		float y = 0;
+		float z = 0;
+		float w = 0;
 	};
 
 	struct XpsBone
@@ -61,5 +75,21 @@ namespace XpsImport
 
 	struct XpsVertex
 	{
+		uint32_t id = {};
+		XpsVector3 coordDelta = {};
+		XpsVector3 normal = {};
+		XpsVector2 uv = {};
+		XpsVector3 color = {};
+		XpsVector4 boneWeights = {};
+		bool merged = false;
+	};
+
+	struct XpsMesh
+	{
+		std::string name = std::string();
+		std::vector<XpsTexture> textures = std::vector<XpsTexture>();
+		std::vector<XpsVertex> vertices = std::vector<XpsVertex>();
+		std::vector<uint32_t> indices = std::vector<uint32_t>();
+		size_t uvCount = 0;
 	};
 }
