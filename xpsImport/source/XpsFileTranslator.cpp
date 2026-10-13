@@ -33,6 +33,8 @@ namespace XpsImport
 
 		std::vector<XpsMesh> meshes = XpsBinUtils::readMeshes(inFile, header, !bones.empty());
 
+
+
 		MGlobal::displayInfo("Import successful!");
 		return MS::kSuccess;
 	}

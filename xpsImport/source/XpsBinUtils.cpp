@@ -496,6 +496,11 @@ namespace XpsImport
 		return poseData;
 	}
 
+	/**
+	 * @brief Splits one string into an array of strings using provided character as a delimiter
+	 * 
+	 * @returns An array of strings separated by provided delimiter.
+	*/
 	std::vector<std::string> XpsBinUtils::splitStringByChar(const std::string& s, char c)
 	{
 		// Wrap the string in a stream to use stream-based parsing.
@@ -510,6 +515,14 @@ namespace XpsImport
 		return v_result;
 	}
 
+	/**
+	 * @brief Fill the remaining elements of the array with specified characters so it fits specified length
+	 * 
+	 * Copies elements from provided array to new array and fills additional indices with specifed value
+	 * untill the length of the new array is at least equal to minLength array
+	 * 
+	 * @return Provided array with elements appended to it (if necessary)
+	*/
 	std::vector<char> XpsBinUtils::fillArray(const std::vector<char>& array, uint32_t minLength, char value)
 	{
 		std::vector<char> result = array;
