@@ -3,12 +3,18 @@
 
 namespace XpsImport
 {
+	/**
+	 * @brief Struct containing two vectors as floats
+	*/
 	struct XpsVector2
 	{
 		float x = 0;
 		float y = 0;
 	};
 
+	/**
+	 * @brief Struct containing three vectors as floats
+	*/
 	struct XpsVector3
 	{
 		float x = 0;
@@ -16,6 +22,9 @@ namespace XpsImport
 		float z = 0;
 	};
 
+	/**
+	 * @brief Struct containing three vectors as unsigned integers (uint32_t)
+	*/
 	struct XpsIuVector3
 	{
 		uint32_t x;
@@ -23,6 +32,9 @@ namespace XpsImport
 		uint32_t z;
 	};
 
+	/**
+	 * @brief Struct containing four vectors as floats
+	*/
 	struct XpsVector4
 	{
 		float x = 0;
@@ -31,6 +43,9 @@ namespace XpsImport
 		float w = 0;
 	};
 
+	/**
+	 * @brief Struct containing four vectors as unsigned integers (uint32_t)
+	*/
 	struct XpsIuVector4
 	{
 		uint32_t x;
@@ -39,6 +54,9 @@ namespace XpsImport
 		uint32_t w;
 	};
 
+	/**
+	 * @brief Struct containing four vectors as signed chars (int8_t)
+	*/
 	struct XpsCVector4
 	{
 		int8_t x;
