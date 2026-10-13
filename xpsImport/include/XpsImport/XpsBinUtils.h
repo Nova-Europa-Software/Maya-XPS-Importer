@@ -27,7 +27,7 @@ namespace XpsImport
 		static XpsHeader readHeader(std::ifstream& fileStream);
 		static bool hasTangentVersion(const uint16_t& verMaj, const uint16_t& verMin, bool hasHeader = true);
 		static std::unordered_map<std::string, XpsBonePose> readDefaultPose(std::ifstream& fileStream, uint32_t poseLenUnround, uint32_t poseBones);
-		static uint32_t roundToMultiple(uint32_t numToRound, uint32_t multiple);
+		static uint32_t roundUpToMultiple(uint32_t numToRound, uint32_t multiple);
 		static XpsFlags readFlags(std::ifstream& fileStream, uint32_t optCount);
 		static int flagValue(uint32_t flag, uint32_t value);
 		static std::unordered_map<std::string, XpsBonePose> poseData(std::string poseString);

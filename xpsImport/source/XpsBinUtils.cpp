@@ -181,7 +181,7 @@ namespace XpsImport
 				else if (optType == 1)
 				{
 					auto xpsPoseData = readDefaultPose(fileStream, optCount, optInfo);
-					uint32_t readCount = roundToMultiple(optCount, XPS_ROUND_MULTIPLE);
+					uint32_t readCount = roundUpToMultiple(optCount, XPS_ROUND_MULTIPLE);
 					valuesRead += readCount;
 				}
 				else if (optType == 2)
@@ -289,8 +289,6 @@ namespace XpsImport
 
 	/**
 	 * @brief Reads default pose for the model
-	 * 
-	 * 
 	*/
 	std::unordered_map<std::string, XpsBonePose> XpsBinUtils::readDefaultPose(std::ifstream& fileStream, uint32_t poseLenUnround, uint32_t poseBones)
 	{
@@ -306,7 +304,7 @@ namespace XpsImport
 			}
 		}
 
-		uint32_t poseLength = roundToMultiple(poseLenUnround, XPS_ROUND_MULTIPLE);
+		uint32_t poseLength = roundUpToMultiple(poseLenUnround, XPS_ROUND_MULTIPLE);
 		uint32_t emptyBytes = poseLength - poseLenUnround;
 		if (emptyBytes > 0)
 		{
@@ -319,9 +317,25 @@ namespace XpsImport
 		return result;
 	}
 
-	uint32_t XpsBinUtils::roundToMultiple(uint32_t numToRound, uint32_t multiple)
+	/**
+	 * @brief Rounds provided number to the nearest multiple of @b multiple
+	 * 
+	 * Round provided number to the nearest multiple of the @b multiple argument.
+	 * (Example [multiple = 5]: [0...5] -> 5, [6...10] -> 10, [11...15] -> 15, etc.)
+	 * 
+	 * @note This function always rounds upwords! This means that the result is always
+	 * greater that the @b numToRound parameter.
+	*/
+	uint32_t XpsBinUtils::roundUpToMultiple(uint32_t numToRound, uint32_t multiple)
 	{
-		return ((numToRound + multiple - 1) / multiple) * multiple;
+		if (multiple == 0)
+			return numToRound;              // Nothing to round to
+
+		uint32_t remainder = numToRound % multiple;
+		if (remainder == 0)
+			return numToRound;              // Already a multiple
+
+		return numToRound + (multiple - remainder);   // Add what is missing
 	}
 
 	XpsFlags XpsBinUtils::readFlags(std::ifstream& fileStream, uint32_t optCount)
@@ -414,6 +428,15 @@ namespace XpsImport
 		return flags;
 	}
 
+	/**
+	 * @brief Converts raw flag value (uint32_t) to its proper type.
+	 * 
+	 * Converts provided value to fit the desired flag. For flags between
+	 * 0 - 2 and 6 - 7 the value is converted to a boolean like integer.
+	 * For values between 3 - 5 the value is normalized to a value between
+	 * -1 and 1 using modulo operator (%). For any other flag the value is left
+	 * untouched.
+	*/
 	int XpsBinUtils::flagValue(uint32_t flag, uint32_t value)
 	{
 		if ((flag >= 0 && flag <= 2) || (flag >= 6 && flag <= 7))
