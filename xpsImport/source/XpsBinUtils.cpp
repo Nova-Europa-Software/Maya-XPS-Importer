@@ -436,6 +436,8 @@ namespace XpsImport
 	 * For values between 3 - 5 the value is normalized to a value between
 	 * -1 and 1 using modulo operator (%). For any other flag the value is left
 	 * untouched.
+	 * 
+	 * @return Retuns converted value.
 	*/
 	int XpsBinUtils::flagValue(uint32_t flag, uint32_t value)
 	{
@@ -538,26 +540,42 @@ namespace XpsImport
 		return result;
 	}
 
+	/**
+	 * @brief Read models bone data
+	 * 
+	 * Reads model bone count and parses data for each bone
+	 * (Name, position, parent bone, bone id).
+	 * 
+	 * @note If bone name cannot be obtained a new generic one is generated
+	 * using bone id (Bone_[boneId]).
+	*/
 	std::vector<XpsBone> XpsBinUtils::readBones(std::ifstream& fileStream, XpsHeader& header)
 	{
-		std::vector<XpsBone> bones;
 
+		// Read imported model bone count
 		uint32_t boneCount = 0;
 		fileStream.read((char*)&boneCount, sizeof(uint32_t));
 
+		std::vector<XpsBone> bones(boneCount);
+
+		// Parse each bone
 		for (size_t i = 0; i < boneCount; i++)
 		{
 			std::string boneName = std::string();
 
+			// Try to obtain a bone name
 			std::optional<std::string> nameOpt = readString(fileStream);
 			if (nameOpt.has_value())
 				boneName = nameOpt.value();
 			else
+				// If bone name could not be obtained generate a new generic name for it
 				boneName = "Bone_" + std::to_string(i);
 
+			// Read parent bones
 			uint16_t parentId = 0;
 			fileStream.read((char*)&parentId, sizeof(uint16_t));
 
+			// Read bone coordinates
 			XpsVector3 coord = {};
 			fileStream.read((char*)&coord.x, sizeof(float));
 			fileStream.read((char*)&coord.y, sizeof(float));
@@ -569,7 +587,7 @@ namespace XpsImport
 			bone.name = boneName;
 			bone.co = coord;
 
-			bones.push_back(bone);
+			bones[i] = bone;
 
 #ifdef _DEBUG
 			MString xStr(std::to_string(coord.x).c_str());
@@ -592,12 +610,30 @@ namespace XpsImport
 		return bones;
 	}
 
+	/**
+	 * @brief Reads and parses mesh data from XPS file
+	 * 
+	 * Parses data (name, textures, vertices and indices) for each mesh stored in a XPS file.
+	 * The function firstly obtains number of meshes stored in a file. Then it
+	 * loops over each mesh firstly parsing all textures related to it. After that the function
+	 * loops over each vertex of a mesh parsing its data (position, normal, texture coords, tangents
+	 * and weights). After the function finishes parsing all vertices of a mesh it starts parsing
+	 * all indices of the mesh. When the function finishes parsing data for all meshes it returns
+	 * a vector containing all parsed data.
+	 * 
+	 * @note If a mesh name cannot be obtained then a new generic one is generated
+	 * 
+	 * @note If a related texture name cannot be obtained then a new generic one is generated
+	 * 
+	 * @return Returns a vector containing data of all meshes included in XPS file.
+	*/
 	std::vector<XpsMesh> XpsBinUtils::readMeshes(std::ifstream& fileStream, std::optional<XpsHeader> headerOpt, bool hasBones)
 	{
-		std::vector<XpsMesh> meshes = std::vector<XpsMesh>();
-
+		// Read mesh count
 		uint32_t meshCount = 0;
 		fileStream.read((char*)&meshCount, sizeof(uint32_t));
+
+		std::vector<XpsMesh> meshes(meshCount);
 
 #ifdef _DEBUG
 		MString meshCountStr(std::to_string(meshCount).c_str());
@@ -614,6 +650,7 @@ namespace XpsImport
 			verMinor = header.versionMinor;
 		}
 
+		// Check if the model has tangent data and variable weights
 		bool hasTangent = hasTangentVersion(verMajor, verMinor, headerOpt.has_value());
 		bool hasVWeights = hasVariableWeights(verMajor, verMinor, headerOpt.has_value());
 
@@ -625,23 +662,28 @@ namespace XpsImport
 		else MGlobal::displayInfo("hasVariableWeights set to false!");
 #endif
 		
+		// Parse each mesh
 		for(size_t i = 0; i < meshCount; i++)
 		{
 			XpsMesh mesh = {};
 
+			// Try to obtain mesh name
 			std::optional<std::string> meshStr = readString(fileStream);
 			std::string meshName = std::string();
 			
 			if (meshStr.has_value())
 				meshName = meshStr.value();
 			else
+				// If mesh name cannot be obtained then generate a generic one
 				meshName = "Mesh_" + std::to_string(i);
 
 			mesh.name = meshName;
 
+			// Read number of mesh UV (texCoord) layers
 			uint32_t uvLayerCount = 0;
 			fileStream.read((char*)&uvLayerCount, sizeof(uint32_t));
 
+			// Read count of textures referenced by mesh
 			uint32_t textureCount = 0;
 			fileStream.read((char*)&textureCount, sizeof(uint32_t));
 
@@ -661,8 +703,10 @@ namespace XpsImport
 
 			for(size_t j = 0; j < textureCount; j++)
 			{
+				// Try to obtain texture name / path
 				std::optional<std::string> textureStr = readString(fileStream);
 
+				// Read ID of UV layer related to the current texture
 				uint32_t uvLayerId = 0;
 				fileStream.read((char*)&uvLayerId, sizeof(uint32_t));
 				
@@ -672,6 +716,7 @@ namespace XpsImport
 				if (textureStr.has_value())
 					tex.file = textureStr.value();
 				else
+					// If texture name cannot be obtained generate a generic one
 					tex.file = "texture_" + std::to_string(j);
 
 #ifdef _DEBUG
@@ -682,6 +727,7 @@ namespace XpsImport
 				textures[j] = tex;
 			}
 
+			// Read vertex count of the mesh
 			uint32_t vertexCount = 0;
 			fileStream.read((char*)&vertexCount, sizeof(uint32_t));
 
@@ -690,26 +736,31 @@ namespace XpsImport
 			MGlobal::displayInfo("Mesh vertex count: " + vertCountStr);
 #endif
 
+			// Parse vertex data for all vertices
 			for(size_t j = 0; j < vertexCount; j++)
 			{
 				XpsVertex vertex;
 
+				// Read vertex position
 				XpsVector3 coord = {};
 				fileStream.read((char*)&coord.x, sizeof(float));
 				fileStream.read((char*)&coord.y, sizeof(float));
 				fileStream.read((char*)&coord.z, sizeof(float));
 
+				// Read vertex normal
 				XpsVector3 normal = {};
 				fileStream.read((char*)&normal.x, sizeof(float));
 				fileStream.read((char*)&normal.y, sizeof(float));
 				fileStream.read((char*)&normal.z, sizeof(float));
 
+				// Read vertex color
 				XpsCVector4 color = {};
 				fileStream.read((char*)&color.x, sizeof(int8_t));
 				fileStream.read((char*)&color.y, sizeof(int8_t));
 				fileStream.read((char*)&color.z, sizeof(int8_t));
 				fileStream.read((char*)&color.w, sizeof(int8_t));
 
+				// Read vertex texture coords (UVs)
 				std::vector<XpsVector2> uvs = std::vector<XpsVector2>(uvLayerCount);
 
 				for(size_t k = 0; k < uvLayerCount; k++)
@@ -720,6 +771,7 @@ namespace XpsImport
 
 					uvs[k] = uv;
 
+					// If model has tangent data read additional tangent data
 					if(hasTangent)
 					{
 						XpsVector4 tangent = {};
@@ -732,11 +784,15 @@ namespace XpsImport
 
 				std::vector<XpsBoneWeight> boneWeightsVec = std::vector<XpsBoneWeight>();
 
+				// If model contains skeleton read IDs of the bones related to current vertex
+				// and their weights
 				if (hasBones)
 				{
 					std::vector<uint16_t> boneIds = std::vector<uint16_t>();
 					std::vector<float> boneWeight = std::vector<float>();
 
+					// If model supports variable weights obtain weight count from the file
+					// Otherwise default to 4
 					int16_t weightCount = 4;
 					if (hasVWeights)
 						fileStream.read((char*)&weightCount, sizeof(int16_t));
@@ -751,6 +807,7 @@ namespace XpsImport
 						boneWeight.resize(weightCount);
 					}
 
+					// Read Bone ID and its weight for all related bones
 					for (size_t k = 0; k < weightCount; k++)
 					{
 						int16_t bone_id = 0;
@@ -810,11 +867,13 @@ namespace XpsImport
 				mesh.vertices.push_back(vertex);
 			}			
 
+			// Read number of faces / triangles of the current mesh
 			uint32_t triCount = 0;
 			fileStream.read((char*)&triCount, sizeof(uint32_t));
 
 			std::vector<XpsIuVector3> faces(triCount);
 
+			// Parse each face
 			for (size_t j = 0; j < triCount; j++)
 			{
 				XpsIuVector3 triIds = {};
@@ -835,6 +894,11 @@ namespace XpsImport
 
 	}
 
+	/**
+	 * @brief Check if the file has support for variable weights
+	 * 
+	 * @return True if variable weights are supported, false otherwise
+	*/
 	bool XpsBinUtils::hasVariableWeights(uint32_t verMajor, uint32_t verMinor, bool hasHeader)
 	{
 		return (verMajor >= 3) && hasHeader;
