@@ -228,15 +228,32 @@ namespace XpsImport
 		return result;
 	}
 
+	/**
+	 * @brief Attemps to read a string stored in an XPS file.
+	 * 
+	 * Attemps to read a string stored in a XPS file. Treats the
+	 * first encountered byte as a string length descriptor.
+	 * If the string length descriptor exceeds an XPS limit (128)
+	 * then the following byte is also treated as a string length descriptor
+	 * otherwise it is set to 0. The string length is calculated using following formula 
+	 * @b (lengthByte1 % XPS_LIMIT) + (lengthByte2 * XPS_LIMIT). If any of the length
+	 * bytes are read as 0 then function fails and returns empty optional. Otherwise
+	 * the function reads N bytes (N = length calculated using previously provided formula)
+	 * and returns them as a string.
+	 * 
+	 * @note The fileStream must already point to the byte containing string length.
+	 * 
+	 * @return Returns a string read from XPS file upon succes. Otherwise returns empty optional.
+	 */
 	std::optional<std::string> XpsBinUtils::readString(std::ifstream& fileStream)
 	{
 		uint8_t lengthByte1 = 0;
 		fileStream.read((char*)&lengthByte1, sizeof(uint8_t));
 
-		uint8_t lengthByte2 = 0;
-
 		if (lengthByte1 == 0)
 			return {};
+
+		uint8_t lengthByte2 = 0;
 
 		if (lengthByte1 >= XPS_LIMIT)
 		{
@@ -254,6 +271,14 @@ namespace XpsImport
 		return result;
 	}
 
+	/**
+	 * @brief Checks if provided file version has support for tangents
+	 * 
+	 * @note If hasHeader was set to false the function skips the check and
+	 * returns true.
+	 * 
+	 * @return True if provided version has tangent support, false otherwise.
+	*/
 	bool XpsBinUtils::hasTangentVersion(const uint16_t& verMaj, const uint16_t& verMin, bool hasHeader)
 	{
 		if (hasHeader)
@@ -262,6 +287,11 @@ namespace XpsImport
 			return true;
 	}
 
+	/**
+	 * @brief Reads default pose for the model
+	 * 
+	 * 
+	*/
 	std::unordered_map<std::string, XpsBonePose> XpsBinUtils::readDefaultPose(std::ifstream& fileStream, uint32_t poseLenUnround, uint32_t poseBones)
 	{
 		std::string poseBytes = std::string();
