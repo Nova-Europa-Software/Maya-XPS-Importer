@@ -288,7 +288,11 @@ namespace XpsImport
 	}
 
 	/**
-	 * @brief Reads default pose for the model
+	 * @brief Reads default pose for the model.
+	 * 
+	 * @return A default pose for a model.
+	 * 
+	 * @see poseData
 	*/
 	std::unordered_map<std::string, XpsBonePose> XpsBinUtils::readDefaultPose(std::ifstream& fileStream, uint32_t poseLenUnround, uint32_t poseBones)
 	{
@@ -338,6 +342,11 @@ namespace XpsImport
 		return numToRound + (multiple - remainder);   // Add what is missing
 	}
 
+	/**
+	 * @brief Reads model flags from XPS file.
+	 * 
+	 * @return A XpsFlags structure containing all values parsed from XPS file.
+	*/
 	XpsFlags XpsBinUtils::readFlags(std::ifstream& fileStream, uint32_t optCount)
 	{
 #ifdef _DEBUG
@@ -451,6 +460,11 @@ namespace XpsImport
 			return value;
 	}
 
+	/**
+	 * @brief Reads and parses pose data for each bone.
+	 * 
+	 * @return An unordered map containing pose data.
+	*/
 	std::unordered_map<std::string, XpsBonePose> XpsBinUtils::poseData(std::string poseString)
 	{
 		std::unordered_map<std::string, XpsBonePose> poseData;
