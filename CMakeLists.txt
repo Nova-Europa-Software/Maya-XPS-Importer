@@ -9,6 +9,10 @@ option(MAYASDK_INCLUDE_DIR "Path to Autodesk Maya SDK header directory")
 # Expected to be provided by CMakePresets.json or via command line.
 option(MAYASDK_LIBRARY_DIR "Path to Autodesk Maya SDK library directory")
 
+# Prefix for the compiled binary
+# Expected to be provided by CMakePresets.json or via command line.
+option(PLUGIN_PREFIX_STR "A prefix for a compiled binary")
+
 # Use C++20 and require compiler support for it
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
@@ -42,6 +46,6 @@ file(GLOB xpsCode
 add_library(MayaXpsImport SHARED ${xpsCode})
 
 set_target_properties(MayaXpsImport PROPERTIES 
-    PREFIX ""
+    PREFIX ${PLUGIN_PREFIX_STR}
     SUFFIX ".mll"
 )
