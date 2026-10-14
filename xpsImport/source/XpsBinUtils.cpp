@@ -769,10 +769,10 @@ namespace XpsImport
 
 				// Read vertex color
 				XpsCVector4 color = {};
-				fileStream.read((char*)&color.x, sizeof(int8_t));
-				fileStream.read((char*)&color.y, sizeof(int8_t));
-				fileStream.read((char*)&color.z, sizeof(int8_t));
-				fileStream.read((char*)&color.w, sizeof(int8_t));
+				fileStream.read((char*)&color.r, sizeof(int8_t));
+				fileStream.read((char*)&color.g, sizeof(int8_t));
+				fileStream.read((char*)&color.b, sizeof(int8_t));
+				fileStream.read((char*)&color.a, sizeof(int8_t));
 
 				// Read vertex texture coords (UVs)
 				std::vector<XpsVector2> uvs = std::vector<XpsVector2>(uvLayerCount);

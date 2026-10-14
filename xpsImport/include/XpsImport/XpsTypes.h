@@ -8,8 +8,17 @@ namespace XpsImport
 	*/
 	struct XpsVector2
 	{
-		float x = 0;
-		float y = 0;
+		union
+		{
+			float x = 0.0f;
+			float r;
+		};
+
+		union
+		{
+			float y = 0;
+			float g;
+		};
 	};
 
 	/**
@@ -17,9 +26,23 @@ namespace XpsImport
 	*/
 	struct XpsVector3
 	{
-		float x = 0;
-		float y = 0;
-		float z = 0;
+		union
+		{
+			float x = 0.0f;
+			float r;
+		};
+
+		union
+		{
+			float y = 0;
+			float g;
+		};
+
+		union
+		{
+			float z = 0;
+			float b;
+		};
 	};
 
 	/**
@@ -27,9 +50,23 @@ namespace XpsImport
 	*/
 	struct XpsIuVector3
 	{
-		uint32_t x;
-		uint32_t y;
-		uint32_t z;
+		union
+		{
+			uint32_t x = 0;
+			uint32_t r;
+		};
+
+		union
+		{
+			uint32_t y = 0;
+			uint32_t g;
+		};
+
+		union
+		{
+			uint32_t z = 0;
+			uint32_t b;
+		};
 	};
 
 	/**
@@ -37,10 +74,29 @@ namespace XpsImport
 	*/
 	struct XpsVector4
 	{
-		float x = 0;
-		float y = 0;
-		float z = 0;
-		float w = 0;
+		union
+		{
+			float x = 0.0f;
+			float r;
+		};
+
+		union
+		{
+			float y = 0;
+			float g;
+		};
+
+		union
+		{
+			float z = 0;
+			float b;
+		};
+
+		union
+		{
+			float w = 0;
+			float a;
+		};
 	};
 
 	/**
@@ -48,10 +104,29 @@ namespace XpsImport
 	*/
 	struct XpsIuVector4
 	{
-		uint32_t x;
-		uint32_t y;
-		uint32_t z;
-		uint32_t w;
+		union
+		{
+			uint32_t x = 0;
+			uint32_t r;
+		};
+
+		union
+		{
+			uint32_t y = 0;
+			uint32_t g;
+		};
+
+		union
+		{
+			uint32_t z = 0;
+			uint32_t b;
+		};
+
+		union
+		{
+			uint32_t w = 0;
+			uint32_t a;
+		};
 	};
 
 	/**
@@ -59,84 +134,170 @@ namespace XpsImport
 	*/
 	struct XpsCVector4
 	{
-		int8_t x;
-		int8_t y;
-		int8_t z;
-		int8_t w;
+		union
+		{
+			int8_t x = 0;
+			int8_t r;
+		};
+
+		union
+		{
+			int8_t y = 0;
+			int8_t g;
+		};
+
+		union
+		{
+			int8_t z = 0;
+			int8_t b;
+		};
+
+		union
+		{
+			int8_t w = 0;
+			int8_t a;
+		};
 	};
 
+	/**
+	 * @brief Struct containing all relevant bone data
+	*/
 	struct XpsBone
 	{
-		uint32_t id = 0;
-		std::string name = std::string();
-		XpsVector3 co = {};
-		uint32_t parentId = 0;
+		/** Bone ID */
+		uint32_t id = 0; 
+		/** Bone name */
+		std::string name = std::string(); 
+		/** Bone coordinates (X,Y,Z) */
+		XpsVector3 co = {}; 
+		/** ID of parent bone */
+		uint32_t parentId = 0; 
 	};
 
+	/**
+	 * @brief Struct containing all bone transformations
+	*/
 	struct XpsBonePose
 	{
-		std::string boneName = std::string();
-		XpsVector3 coordDelta = {};
-		XpsVector3 rotDelta = {};
-		XpsVector3 scale = {};
+		/** Name of related bone */
+		std::string boneName = std::string(); 
+		/** Translation in X,Y,Z axes */
+		XpsVector3 coordDelta = {}; 
+		/** Rotation in X,Y,Z axes */
+		XpsVector3 rotDelta = {}; 
+		/** Scale in X,Y,Z axes */
+		XpsVector3 scale = {}; 
 	};
 
+	/**
+	 * @brief Struct containing all header data
+	*/
 	struct XpsHeader
 	{
-		uint32_t magicNumber = XPS_MAGIC_NUMBER;
-		uint16_t versionMajor = XPS_VERSION_MAJOR;
-		uint16_t versionMinor = XPS_VERSION_MINOR;
-		std::string xnaAral = XPS_ARAL;
-		uint32_t settingsLen = XPS_STRLEN;
-		std::string machine = std::string();
-		std::string user = std::string();
-		std::string settings = std::string();
-		std::string pose = std::string();
-		std::string files = std::string();
+		/** XPS magic number */
+		uint32_t magicNumber = XPS_MAGIC_NUMBER; 
+		/** XPS file version major */
+		uint16_t versionMajor = XPS_VERSION_MAJOR; 
+		/** XPS file version minor */
+		uint16_t versionMinor = XPS_VERSION_MINOR; 
+		/** XPS file string */
+		std::string xnaAral = XPS_ARAL; 
+		/** Length of settings in bytes */
+		uint32_t settingsLen = XPS_STRLEN; 
+		/** Device name that the file was created on */
+		std::string machine = std::string(); 
+		/** Name of the file creator */
+		std::string user = std::string(); 
+		/** String containing settings */
+		std::string settings = std::string(); 
+		/** String containing pose data */
+		std::string pose = std::string(); 
+		/** String containing all related files */
+		std::string files = std::string(); 
 	};
 
+	/**
+	 * @brief Struct containing all model flags
+	*/
 	struct XpsFlags
 	{
-		bool backFaceCulling = false;
-		bool alwaysForceCulling = false;
-		bool modelCastShadows = true;
-		int tangentSpaceRed = 0;
-		int tangentSpaceGreen = 1;
-		int tangentSpaceBlue = 0;
-		int gloss = 10;
-		bool hasBoneDirections = false;
+		/** Determines if back face culling should be enabled */
+		bool backFaceCulling = false; 
+		/** Determines if face culling should be forced onto a model */
+		bool alwaysForceCulling = false; 
+		/** Determines if model should cast shadows */
+		bool modelCastShadows = true; 
+		/** Determines if tangent is in red channel */
+		int tangentSpaceRed = 0; 
+		/** Determines if tangent is in green channel */
+		int tangentSpaceGreen = 1; 
+		/** Determines if tangent is in blue channel */
+		int tangentSpaceBlue = 0; 
+		/** Determines model glossines */
+		int gloss = 10; 
+		/** Determines if bone have direction data */
+		bool hasBoneDirections = false; 
 	};
 
+	/**
+	 * @brief Struct containing all relevant texture data
+	*/
 	struct XpsTexture
 	{
-		uint32_t id = 0;
-		std::string file = std::string();
-		uint32_t uvLayer = 0;
+		/** ID of the texture */
+		uint32_t id = 0; 
+		/** Path to a related image file */
+		std::string file = std::string(); 
+		/** ID of related UV layer */
+		uint32_t uvLayer = 0; 
 	};
 
+	/**
+	 * @brief Struct containing vertex weight data
+	*/
 	struct XpsBoneWeight
 	{
-		uint16_t id = 0;
-		float weight = 0.0f;
+		/** ID of related bone */
+		uint16_t id = 0; 
+		/** Bone weight */
+		float weight = 0.0f; 
 	};
 
+	/**
+	 * @brief Struct containing all relevant vertex data
+	*/
 	struct XpsVertex
 	{
-		uint32_t id = {};
-		XpsVector3 coordDelta = {};
-		XpsVector3 normal = {};
-		std::vector<XpsVector2> uv = {};
-		XpsCVector4 color = {};
-		std::vector<XpsBoneWeight> boneWeights = {};
-		bool merged = false;
+		/** ID of the vertex */
+		uint32_t id = {}; 
+		/** Vertex position */
+		XpsVector3 coordDelta = {}; 
+		/** Vertex normal */
+		XpsVector3 normal = {}; 
+		/** Texture coordinates / UV data */
+		std::vector<XpsVector2> uv = {}; 
+		/** Vertex color */
+		XpsCVector4 color = {}; 
+		/** Bone data */
+		std::vector<XpsBoneWeight> boneWeights = {}; 
+		/** Unused value */
+		bool merged = false; 
 	};
 
+	/**
+	 * @brief Struct containing all relevant mesh data
+	*/
 	struct XpsMesh
 	{
-		std::string name = std::string();
-		std::vector<XpsTexture> textures = std::vector<XpsTexture>();
-		std::vector<XpsVertex> vertices = std::vector<XpsVertex>();
-		std::vector<XpsIuVector3> faces = std::vector<XpsIuVector3>();
-		size_t uvCount = 0;
+		/** Mesh name */
+		std::string name = std::string(); 
+		/** Mesh texture data */
+		std::vector<XpsTexture> textures = std::vector<XpsTexture>(); 
+		/** Mesh vertex data */
+		std::vector<XpsVertex> vertices = std::vector<XpsVertex>(); 
+		/** Mesh index data */
+		std::vector<XpsIuVector3> faces = std::vector<XpsIuVector3>(); 
+		/** Number of UV layers used by the mesh */
+		size_t uvCount = 0; 
 	};
 }
