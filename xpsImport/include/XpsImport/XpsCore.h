@@ -10,12 +10,14 @@
 #include <map>
 #include <unordered_map>
 #include <cmath>
+#include <thread>
 
 // Maya SDK headers
 #include <maya/MFnTransform.h>
 #include <maya/MFnMesh.h>
 #include <maya/MPxFileTranslator.h>
 #include <maya/MGlobal.h>
+#include <maya/MPointArray.h>
 
 // XPS default / fallback values
 #define XPS_MAGIC_NUMBER 323232

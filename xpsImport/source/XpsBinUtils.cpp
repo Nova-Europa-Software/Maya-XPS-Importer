@@ -811,10 +811,6 @@ namespace XpsImport
 					if (hasVWeights)
 						fileStream.read((char*)&weightCount, sizeof(int16_t));
 
-#ifdef _DEBUG
-					MString weightCountStr(std::to_string(weightCount).c_str());
-					MGlobal::displayInfo("Vertex weight count = " + weightCountStr);
-#endif
 					if (weightCount >= 0)
 					{
 						boneIds.resize(weightCount);
@@ -885,16 +881,25 @@ namespace XpsImport
 			uint32_t triCount = 0;
 			fileStream.read((char*)&triCount, sizeof(uint32_t));
 
+			MString triCountStr(std::to_string(triCount).c_str());
+			MGlobal::displayInfo("Face count = " + triCountStr);
+
 			std::vector<XpsIuVector3> faces(triCount);
 
 			// Parse each face
 			for (size_t j = 0; j < triCount; j++)
 			{
-				XpsIuVector3 triIds = {};
+				XpsIuVector3 triIds;
 
 				fileStream.read((char*)&triIds.x, sizeof(uint32_t));
 				fileStream.read((char*)&triIds.y, sizeof(uint32_t));
 				fileStream.read((char*)&triIds.z, sizeof(uint32_t));
+
+				MString idX(std::to_string(triIds.x).c_str());
+				MString idY(std::to_string(triIds.y).c_str());
+				MString idZ(std::to_string(triIds.z).c_str());
+
+				MGlobal::displayInfo("Triangle data : " + idX + "," + idY + "," + idZ);
 
 				faces.push_back(triIds);
 			}
