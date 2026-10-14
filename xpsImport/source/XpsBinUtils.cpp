@@ -901,12 +901,12 @@ namespace XpsImport
 
 				MGlobal::displayInfo("Triangle data : " + idX + "," + idY + "," + idZ);
 
-				faces.push_back(triIds);
+				faces[j] = triIds;
 			}
 
-			mesh.faces = faces;
+			mesh.faces = std::vector<XpsIuVector3>(faces.begin(), faces.end());
 
-			meshes.push_back(mesh);
+			meshes[i] = mesh;
 		}
 	
 		return meshes;

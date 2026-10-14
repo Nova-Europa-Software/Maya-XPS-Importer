@@ -35,8 +35,16 @@ namespace XpsImport
 
 		for (auto& xpsMesh : meshes)
 		{
+#ifdef _DEBUG
+			if (xpsMesh.vertices.size() == 0 || xpsMesh.faces.size() == 0)
+			{
+				MGlobal::displayWarning("Ghost mesh encountered!");
+				continue;
+			}
+#else
 			if (xpsMesh.vertices.size() == 0 || xpsMesh.faces.size() == 0)
 				continue;
+#endif
 
 			MString meshName(xpsMesh.name.c_str());
 			MString vertCountStr(std::to_string(xpsMesh.vertices.size()).c_str());
@@ -61,8 +69,16 @@ namespace XpsImport
 
 			for (auto& index : xpsMesh.faces)
 			{
+#ifdef _DEBUG
+				if (index.x == 0 && index.y == 0 && index.z == 0)
+				{
+					MGlobal::displayWarning("Ghost face encountered!");
+					continue;
+				}
+#else
 				if (index.x == 0 && index.y == 0 && index.z == 0)
 					continue;
+#endif
 
 				polygonCounts.append(3);
 
