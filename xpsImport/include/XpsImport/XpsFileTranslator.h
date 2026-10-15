@@ -20,6 +20,6 @@ namespace XpsImport
 		MPxFileTranslator::MFileKind identifyFile(const MFileObject& file, const char* buffer, short size);
 	
 	private:
-		std::vector<float3> ConvertPositionData(const std::vector<XpsVertex>& vertices);
+		MIntArray flipFaces(const MIntArray& polygonCounts, const MIntArray& polygonConnects);
 	};
 }

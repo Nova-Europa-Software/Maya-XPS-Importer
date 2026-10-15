@@ -55,10 +55,19 @@ namespace XpsImport
 			MGlobal::displayInfo("Face count = " + faceCountStr);
 
 			MPointArray points = {};
+			MVectorArray normals = {};
+			MIntArray vertexIds = {};
 			
+			size_t currentVertId = 0;
+
 			for (auto& vertex : xpsMesh.vertices)
 			{
 				points.append(vertex.coordDelta.x, vertex.coordDelta.y, vertex.coordDelta.z);
+				
+				MVector n(vertex.normal.x, vertex.normal.y, vertex.normal.z);
+				normals.append(n);
+				vertexIds.append(currentVertId);
+				currentVertId++;
 			}
 
 			MFnMesh meshFn = {};
@@ -92,12 +101,25 @@ namespace XpsImport
 				MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
 #endif
 
+			MIntArray flipedPolygons = flipFaces(polygonCounts, polygonConnects);
+
 			MStatus createStatus;
 
-			MObject meshObj = meshFn.create(points.length(), polygonCounts.length(), points, polygonCounts, polygonConnects, MObject::kNullObj, &createStatus);
+			MObject meshObj = meshFn.create(points.length(), polygonCounts.length(), points, polygonCounts, flipedPolygons, MObject::kNullObj, &createStatus);
 			
 			if (!createStatus)
+			{
 				MGlobal::displayError("Failed to create mesh " + meshName + " EC = " + createStatus.errorString());
+				continue;
+			}
+
+			createStatus = meshFn.setVertexNormals(normals, vertexIds, MSpace::kObject);
+
+			if (!createStatus)
+			{
+				MGlobal::displayError("Failed to apply normals to " + meshName + " EC = " + createStatus.errorString());
+				continue;
+			}
 
 			MGlobal::executeCommand(MString("sets -e -forceElement initialShadingGroup ") + MFnDagNode(meshObj).fullPathName());
 		}
@@ -118,5 +140,23 @@ namespace XpsImport
 			return kIsMyFileType;
 		
 		return kNotMyFileType;
+	}
+
+	MIntArray XpsFileTranslator::flipFaces(const MIntArray& polygonCounts, const MIntArray& polygonConnects)
+	{
+		MIntArray out;
+		uint32_t pos = 0;
+		for (size_t i = 0; i < polygonCounts.length(); i++)
+		{
+			int c = polygonCounts[i];
+			for (int j = c - 1; j >= 0; j--)
+			{
+				out.append(polygonConnects[pos + j]);
+			}
+
+			pos += c;
+		}
+
+		return out;
 	}
 }
