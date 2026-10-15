@@ -87,8 +87,10 @@ namespace XpsImport
 				polygonConnects.append(index.z);
 			}
 
+#ifdef _DEBUG
 			if (polygonCounts.length() * 3 != polygonConnects.length())
 				MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
+#endif
 
 			MStatus createStatus;
 

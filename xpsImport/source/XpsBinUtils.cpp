@@ -899,8 +899,6 @@ namespace XpsImport
 				MString idY(std::to_string(triIds.y).c_str());
 				MString idZ(std::to_string(triIds.z).c_str());
 
-				MGlobal::displayInfo("Triangle data : " + idX + "," + idY + "," + idZ);
-
 				faces[j] = triIds;
 			}
 
