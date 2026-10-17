@@ -1,6 +1,7 @@
 #pragma once
 #include "XpsCore.h"
 #include "XpsBinUtils.h"
+#include "IntermediateTypes.h"
 
 namespace XpsImport
 {
@@ -20,6 +21,8 @@ namespace XpsImport
 		MPxFileTranslator::MFileKind identifyFile(const MFileObject& file, const char* buffer, short size);
 	
 	private:
-		std::vector<float3> ConvertPositionData(const std::vector<XpsVertex>& vertices);
+		MStatus createMesh(const XpsMesh& mesh);
+		MIntArray flipFaces(const MIntArray& polygonCounts, const MIntArray& polygonConnects);
+		MeshVertexData parseVertices(const std::vector<XpsVertex>& verts);
 	};
 }
