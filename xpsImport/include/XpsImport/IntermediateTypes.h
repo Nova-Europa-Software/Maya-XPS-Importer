@@ -37,5 +37,8 @@ namespace XpsImport
 		MIntArray polygonCounts = {};
 		/** Array containing data about how vertices are connected */
 		MIntArray polygonConnects = {};
+
+		MIntArray uvFaceCounts = {};
+		MIntArray uvFaceConnects = {};
 	};
 }

@@ -117,11 +117,30 @@ namespace XpsImport
 		if (!createStatus)
 		{
 			MGlobal::displayError("Failed to apply normals to " + meshName + " EC = " + createStatus.errorString());
-			createStatus;
+			return createStatus;
 		}
 
-		MGlobal::executeCommand(MString("sets -e -forceElement initialShadingGroup ") + MFnDagNode(meshObj).fullPathName());
-	
+		for (auto& uvSet : mvd.uvDataVec)
+		{
+			if(uvSet.setName != "map1")
+				createStatus = meshFn.createUVSet(uvSet.setName);
+
+			if (!createStatus)
+			{
+				MGlobal::displayError("Failed to create UV set " + uvSet.setName + " for mesh " + meshName + " EC = " + createStatus.errorString());
+				return createStatus;
+			}
+
+			createStatus = meshFn.setUVs(uvSet.uArray, uvSet.vArray, &uvSet.setName);
+			if (!createStatus)
+			{
+				MGlobal::displayError("Failed to append UVs to " + uvSet.setName + " for mesh " + meshName + " EC = " + createStatus.errorString());
+				return createStatus;
+			}
+
+			meshFn.assignUVs(mid.uvFaceCounts, mid.uvFaceConnects, &uvSet.setName);
+		}
+
 		return createStatus;
 	}
 
@@ -135,7 +154,7 @@ namespace XpsImport
 
 		for (size_t i = 0; i < result.uvDataVec.size(); i++)
 		{
-			std::string rawSetName = "UVset_" + std::to_string(i);
+			std::string rawSetName = "map" + std::to_string(i+1);
 
 			MString setName = MString(rawSetName.c_str());
 
@@ -153,7 +172,8 @@ namespace XpsImport
 			for (auto& uv : vertex.uv)
 			{
 				result.uvDataVec[currentUvSet].uArray.append(uv.x);
-				result.uvDataVec[currentUvSet].vArray.append(uv.y);
+				result.uvDataVec[currentUvSet].vArray.append(1-uv.y);
+				currentUvSet++;
 			}
 
 			result.vertexIdArray.append(currentVertId);
@@ -191,6 +211,19 @@ namespace XpsImport
 		if (result.polygonCounts.length() * 3 != result.polygonConnects.length())
 			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
 #endif
+
+		int faceIndex = 0;
+
+		for (size_t i = 0; i < result.polygonCounts.length(); i++)
+		{
+			result.uvFaceCounts.append(result.polygonCounts[i]);
+
+			for (size_t j = 0; j < result.polygonCounts[i]; j++)
+			{
+				result.uvFaceConnects.append(result.polygonConnects[faceIndex]);
+				faceIndex++;
+			}
+		}
 
 		return result;
 	}

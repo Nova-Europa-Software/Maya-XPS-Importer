@@ -62,4 +62,4 @@ Features
 - Importing textures - :orange_circle:
 - Importing materials - :red_circle:
 - Importing normals - :green_circle:
-- Importing UVs - :red_circle:
+- Importing UVs - :green_circle:
