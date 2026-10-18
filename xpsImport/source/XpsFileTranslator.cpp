@@ -98,40 +98,13 @@ namespace XpsImport
 
 		MFnMesh meshFn = {};
 
-		MIntArray polygonCounts;
+		MeshIndexData mid = parseIndices(mesh.faces);
 
-		MIntArray polygonConnects;
-
-		for (auto& index : mesh.faces)
-		{
-#ifdef _DEBUG
-			if (index.x == 0 && index.y == 0 && index.z == 0)
-			{
-				MGlobal::displayWarning("Ghost face encountered!");
-				continue;
-			}
-#else
-			if (index.x == 0 && index.y == 0 && index.z == 0)
-				continue;
-#endif
-
-			polygonCounts.append(3);
-
-			polygonConnects.append(index.x);
-			polygonConnects.append(index.y);
-			polygonConnects.append(index.z);
-		}
-
-#ifdef _DEBUG
-		if (polygonCounts.length() * 3 != polygonConnects.length())
-			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
-#endif
-
-		MIntArray flipedPolygons = flipFaces(polygonCounts, polygonConnects);
+		MIntArray flipedPolygons = flipFaces(mid.polygonCounts, mid.polygonConnects);
 
 		MStatus createStatus;
 
-		MObject meshObj = meshFn.create(mvd.positionArray.length(), polygonCounts.length(), mvd.positionArray, polygonCounts, flipedPolygons, MObject::kNullObj, &createStatus);
+		MObject meshObj = meshFn.create(mvd.positionArray.length(), mid.polygonCounts.length(), mvd.positionArray, mid.polygonCounts, flipedPolygons, MObject::kNullObj, &createStatus);
 
 		if (!createStatus)
 		{
@@ -186,6 +159,38 @@ namespace XpsImport
 			result.vertexIdArray.append(currentVertId);
 			currentVertId++;
 		}
+
+		return result;
+	}
+
+	MeshIndexData XpsFileTranslator::parseIndices(const std::vector<XpsIuVector3>& inds)
+	{
+		MeshIndexData result = {};
+
+		for (auto& index : inds)
+		{
+#ifdef _DEBUG
+			if (index.x == 0 && index.y == 0 && index.z == 0)
+			{
+				MGlobal::displayWarning("Ghost face encountered!");
+				continue;
+			}
+#else
+			if (index.x == 0 && index.y == 0 && index.z == 0)
+				continue;
+#endif
+
+			result.polygonCounts.append(3);
+
+			result.polygonConnects.append(index.x);
+			result.polygonConnects.append(index.y);
+			result.polygonConnects.append(index.z);
+		}
+
+#ifdef _DEBUG
+		if (result.polygonCounts.length() * 3 != result.polygonConnects.length())
+			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
+#endif
 
 		return result;
 	}

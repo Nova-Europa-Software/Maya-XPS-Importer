@@ -28,5 +28,14 @@ namespace XpsImport
 		std::vector<MeshUvSet> uvDataVec = {};
 	};
 
-	
+	/**
+	 * @brief Struct containing data about mesh indices
+	*/
+	struct MeshIndexData
+	{
+		/** Number of points per face */
+		MIntArray polygonCounts = {};
+		/** Array containing data about how vertices are connected */
+		MIntArray polygonConnects = {};
+	};
 }

@@ -24,5 +24,6 @@ namespace XpsImport
 		MStatus createMesh(const XpsMesh& mesh);
 		MIntArray flipFaces(const MIntArray& polygonCounts, const MIntArray& polygonConnects);
 		MeshVertexData parseVertices(const std::vector<XpsVertex>& verts);
+		MeshIndexData parseIndices(const std::vector<XpsIuVector3>& inds);
 	};
 }
