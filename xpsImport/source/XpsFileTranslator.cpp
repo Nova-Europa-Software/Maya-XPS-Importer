@@ -158,12 +158,31 @@ namespace XpsImport
 
 		size_t currentVertId = 0;
 
+		result.uvDataVec.resize(verts[0].uv.size());
+
+		for (size_t i = 0; i < result.uvDataVec.size(); i++)
+		{
+			std::string rawSetName = "UVset_" + std::to_string(i);
+
+			MString setName = MString(rawSetName.c_str());
+
+			result.uvDataVec[i].setName = setName;
+		}
+
 		for (auto& vertex : verts)
 		{
 			result.positionArray.append(vertex.coordDelta.x, vertex.coordDelta.y, vertex.coordDelta.z);
 
 			MVector n(vertex.normal.x, vertex.normal.y, vertex.normal.z);
 			result.normalArray.append(n);
+
+			size_t currentUvSet = 0;
+			for (auto& uv : vertex.uv)
+			{
+				result.uvDataVec[currentUvSet].uArray.append(uv.x);
+				result.uvDataVec[currentUvSet].vArray.append(uv.y);
+			}
+
 			result.vertexIdArray.append(currentVertId);
 			currentVertId++;
 		}

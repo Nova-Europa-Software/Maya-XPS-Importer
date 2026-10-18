@@ -18,6 +18,7 @@
 #include <maya/MPxFileTranslator.h>
 #include <maya/MGlobal.h>
 #include <maya/MPointArray.h>
+#include <maya/MFloatArray.h>
 
 // XPS default / fallback values
 #define XPS_MAGIC_NUMBER 323232

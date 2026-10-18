@@ -4,6 +4,16 @@
 namespace XpsImport
 {
 	/**
+	 * @brief Struct containing mesh UV data for current set
+	*/
+	struct MeshUvSet
+	{
+		MString setName = {};
+		MFloatArray uArray = {};
+		MFloatArray vArray = {};
+	};
+
+	/**
 	 * @brief Struct containing parsed XPS data ready to be passed to Maya
 	*/
 	struct MeshVertexData
@@ -14,5 +24,9 @@ namespace XpsImport
 		MVectorArray normalArray = {};
 		/** Array position data for each vertex */
 		MPointArray positionArray = {};
+		/** Vector containing UV data for all mesh sets */
+		std::vector<MeshUvSet> uvDataVec = {};
 	};
+
+	
 }
