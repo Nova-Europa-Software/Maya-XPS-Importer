@@ -98,40 +98,14 @@ namespace XpsImport
 
 		MFnMesh meshFn = {};
 
-		MIntArray polygonCounts;
+		MeshIndexData mid = parseIndices(mesh.faces);
 
-		MIntArray polygonConnects;
-
-		for (auto& index : mesh.faces)
-		{
-#ifdef _DEBUG
-			if (index.x == 0 && index.y == 0 && index.z == 0)
-			{
-				MGlobal::displayWarning("Ghost face encountered!");
-				continue;
-			}
-#else
-			if (index.x == 0 && index.y == 0 && index.z == 0)
-				continue;
-#endif
-
-			polygonCounts.append(3);
-
-			polygonConnects.append(index.x);
-			polygonConnects.append(index.y);
-			polygonConnects.append(index.z);
-		}
-
-#ifdef _DEBUG
-		if (polygonCounts.length() * 3 != polygonConnects.length())
-			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
-#endif
-
-		MIntArray flipedPolygons = flipFaces(polygonCounts, polygonConnects);
+		MIntArray flipedPolygons = flipFaces(mid.polygonCounts, mid.polygonConnects);
+		MIntArray flipedUvs = flipFaces(mid.uvFaceCounts, mid.uvFaceConnects);
 
 		MStatus createStatus;
 
-		MObject meshObj = meshFn.create(mvd.positionArray.length(), polygonCounts.length(), mvd.positionArray, polygonCounts, flipedPolygons, MObject::kNullObj, &createStatus);
+		MObject meshObj = meshFn.create(mvd.positionArray.length(), mid.polygonCounts.length(), mvd.positionArray, mid.polygonCounts, flipedPolygons, MObject::kNullObj, &createStatus);
 
 		if (!createStatus)
 		{
@@ -144,11 +118,30 @@ namespace XpsImport
 		if (!createStatus)
 		{
 			MGlobal::displayError("Failed to apply normals to " + meshName + " EC = " + createStatus.errorString());
-			createStatus;
+			return createStatus;
 		}
 
-		MGlobal::executeCommand(MString("sets -e -forceElement initialShadingGroup ") + MFnDagNode(meshObj).fullPathName());
-	
+		for (auto& uvSet : mvd.uvDataVec)
+		{
+			if(uvSet.setName != "map1")
+				createStatus = meshFn.createUVSet(uvSet.setName);
+
+			if (!createStatus)
+			{
+				MGlobal::displayError("Failed to create UV set " + uvSet.setName + " for mesh " + meshName + " EC = " + createStatus.errorString());
+				return createStatus;
+			}
+
+			createStatus = meshFn.setUVs(uvSet.uArray, uvSet.vArray, &uvSet.setName);
+			if (!createStatus)
+			{
+				MGlobal::displayError("Failed to append UVs to " + uvSet.setName + " for mesh " + meshName + " EC = " + createStatus.errorString());
+				return createStatus;
+			}
+
+			meshFn.assignUVs(mid.uvFaceCounts, flipedUvs, &uvSet.setName);
+		}
+
 		return createStatus;
 	}
 
@@ -158,14 +151,79 @@ namespace XpsImport
 
 		size_t currentVertId = 0;
 
+		result.uvDataVec.resize(verts[0].uv.size());
+
+		for (size_t i = 0; i < result.uvDataVec.size(); i++)
+		{
+			std::string rawSetName = "map" + std::to_string(i+1);
+
+			MString setName = MString(rawSetName.c_str());
+
+			result.uvDataVec[i].setName = setName;
+		}
+
 		for (auto& vertex : verts)
 		{
 			result.positionArray.append(vertex.coordDelta.x, vertex.coordDelta.y, vertex.coordDelta.z);
 
 			MVector n(vertex.normal.x, vertex.normal.y, vertex.normal.z);
 			result.normalArray.append(n);
+
+			size_t currentUvSet = 0;
+			for (auto& uv : vertex.uv)
+			{
+				result.uvDataVec[currentUvSet].uArray.append(uv.x);
+				result.uvDataVec[currentUvSet].vArray.append(1-uv.y);
+				currentUvSet++;
+			}
+
 			result.vertexIdArray.append(currentVertId);
 			currentVertId++;
+		}
+
+		return result;
+	}
+
+	MeshIndexData XpsFileTranslator::parseIndices(const std::vector<XpsIuVector3>& inds)
+	{
+		MeshIndexData result = {};
+
+		for (auto& index : inds)
+		{
+#ifdef _DEBUG
+			if (index.x == 0 && index.y == 0 && index.z == 0)
+			{
+				MGlobal::displayWarning("Ghost face encountered!");
+				continue;
+			}
+#else
+			if (index.x == 0 && index.y == 0 && index.z == 0)
+				continue;
+#endif
+
+			result.polygonCounts.append(3);
+
+			result.polygonConnects.append(index.x);
+			result.polygonConnects.append(index.y);
+			result.polygonConnects.append(index.z);
+		}
+
+#ifdef _DEBUG
+		if (result.polygonCounts.length() * 3 != result.polygonConnects.length())
+			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
+#endif
+
+		int faceIndex = 0;
+
+		for (size_t i = 0; i < result.polygonCounts.length(); i++)
+		{
+			result.uvFaceCounts.append(result.polygonCounts[i]);
+
+			for (size_t j = 0; j < result.polygonCounts[i]; j++)
+			{
+				result.uvFaceConnects.append(result.polygonConnects[faceIndex]);
+				faceIndex++;
+			}
 		}
 
 		return result;
