@@ -101,6 +101,7 @@ namespace XpsImport
 		MeshIndexData mid = parseIndices(mesh.faces);
 
 		MIntArray flipedPolygons = flipFaces(mid.polygonCounts, mid.polygonConnects);
+		MIntArray flipedUvs = flipFaces(mid.uvFaceCounts, mid.uvFaceConnects);
 
 		MStatus createStatus;
 
@@ -138,7 +139,7 @@ namespace XpsImport
 				return createStatus;
 			}
 
-			meshFn.assignUVs(mid.uvFaceCounts, mid.uvFaceConnects, &uvSet.setName);
+			meshFn.assignUVs(mid.uvFaceCounts, flipedUvs, &uvSet.setName);
 		}
 
 		return createStatus;
