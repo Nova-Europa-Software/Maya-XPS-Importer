@@ -142,59 +142,7 @@ namespace XpsImport
 			meshFn.assignUVs(mid.uvFaceCounts, flipedUvs, &uvSet.setName);
 		}
 
-		std::string materialNameStr = mesh.name + "_mat";
-		std::string shadingGroupStr = mesh.name + "_shg";
-		MString matName(materialNameStr.c_str());
-		MString sgName(shadingGroupStr.c_str());
-
-		MFnPhongShader meshShader;
-		MObject material = meshShader.create();
-
-		meshShader.setName(matName);
-
-		// THIS IS ONLY TEMPORARY TO TEST IF MATERIALS ARE PROPERLY ASSIGNED
-		meshShader.setColor(MColor(1.0f, 0.0f, 0.0f));
-
-		MDGModifier dg;
-		MObject shadingGroup = dg.createNode("shadingEngine", &createStatus);
-		if (!createStatus)
-			MGlobal::displayError("Failed to create shading engine!");
-		
-
-		if (!createStatus)
-			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
-
-		MFnDependencyNode matNode(material);
-		MFnDependencyNode sgNode(shadingGroup);
-		sgNode.setName(sgName);
-
-		MPlug outColor = matNode.findPlug("outColor", true, &createStatus);
-		if (!createStatus)
-			MGlobal::displayError("Failed to find outColor plug!");
-
-		MPlug surfaceShader = sgNode.findPlug("surfaceShader", true, &createStatus);
-		if (!createStatus)
-			MGlobal::displayError("Failed to find outColor plug!");
-
-		createStatus = dg.connect(outColor, surfaceShader);
-		if (!createStatus)
-			MGlobal::displayError("connect failed for mesh " + meshName + " EC = " + createStatus.errorString());
-
-
-		createStatus = dg.doIt();
-
-		if (!createStatus)
-			MGlobal::displayError("doIt failed for mesh " + meshName + " EC = " + createStatus.errorString());
-
-		MDagPath meshPath;
-		MDagPath::getAPathTo(meshObj, meshPath);
-		meshPath.extendToShape();
-
-		MFnSet sgFn(shadingGroup);
-		createStatus = sgFn.addMember(meshPath);
-		if (!createStatus)
-			MGlobal::displayError("Failed to apply shader for mesh " + meshName + " EC = " + createStatus.errorString());
-
+		createMaterial(mesh, meshObj);
 
 		return createStatus;
 	}
@@ -281,5 +229,65 @@ namespace XpsImport
 		}
 
 		return result;
+	}
+
+	MStatus XpsFileTranslator::createMaterial(const XpsMesh& mesh, const MObject& objMesh)
+	{
+		MStatus createStatus;
+		MString meshName(mesh.name.c_str());
+		std::string materialNameStr = mesh.name + "_mat";
+		std::string shadingGroupStr = mesh.name + "_shg";
+		MString matName(materialNameStr.c_str());
+		MString sgName(shadingGroupStr.c_str());
+
+		MFnPhongShader meshShader;
+		MObject material = meshShader.create();
+
+		meshShader.setName(matName);
+
+		// THIS IS ONLY TEMPORARY TO TEST IF MATERIALS ARE PROPERLY ASSIGNED
+		meshShader.setColor(MColor(1.0f, 0.0f, 0.0f));
+
+		MDGModifier dg;
+		MObject shadingGroup = dg.createNode("shadingEngine", &createStatus);
+		if (!createStatus)
+			MGlobal::displayError("Failed to create shading engine!");
+
+
+		if (!createStatus)
+			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		MFnDependencyNode matNode(material);
+		MFnDependencyNode sgNode(shadingGroup);
+		sgNode.setName(sgName);
+
+		MPlug outColor = matNode.findPlug("outColor", true, &createStatus);
+		if (!createStatus)
+			MGlobal::displayError("Failed to find outColor plug!");
+
+		MPlug surfaceShader = sgNode.findPlug("surfaceShader", true, &createStatus);
+		if (!createStatus)
+			MGlobal::displayError("Failed to find outColor plug!");
+
+		createStatus = dg.connect(outColor, surfaceShader);
+		if (!createStatus)
+			MGlobal::displayError("connect failed for mesh " + meshName + " EC = " + createStatus.errorString());
+
+
+		createStatus = dg.doIt();
+
+		if (!createStatus)
+			MGlobal::displayError("doIt failed for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		MDagPath meshPath;
+		MDagPath::getAPathTo(objMesh, meshPath);
+		meshPath.extendToShape();
+
+		MFnSet sgFn(shadingGroup);
+		createStatus = sgFn.addMember(meshPath);
+		if (!createStatus)
+			MGlobal::displayError("Failed to apply shader for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		return createStatus;
 	}
 }
