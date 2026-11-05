@@ -257,8 +257,15 @@ namespace XpsImport
 		if (!createStatus)
 			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
 
+		if (!mesh.textures.empty())
+		{
+			MObject diffuseMap = readTexture(mesh.textures[0].file, true, MString(mesh.textures[0].file.c_str()));
+			MFnDependencyNode fileFn(diffuseMap);
+		}
+
 		MFnDependencyNode matNode(material);
 		MFnDependencyNode sgNode(shadingGroup);
+
 		sgNode.setName(sgName);
 
 		MPlug outColor = matNode.findPlug("outColor", true, &createStatus);
@@ -297,13 +304,25 @@ namespace XpsImport
 		MDGModifier dg;
 		
 		MObject fileObj = dg.createNode("file", &status);
-		if (!status) return MObject::kNullObj;
+		if (!status)
+		{
+			MGlobal::displayError("Creation of file node for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		MObject p2dObj = dg.createNode("place2dTexture", &status);
-		if (!status) return MObject::kNullObj;
+		if (!status) 
+		{
+			MGlobal::displayError("Creation of place2dTexture node for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		status = dg.doIt();
-		if (!status) return MObject::kNullObj;
+		if (!status)
+		{
+			MGlobal::displayError("doIt for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		MFnDependencyNode fileFn(fileObj), p2dFn(p2dObj);
 		fileFn.setName(name);
@@ -311,9 +330,25 @@ namespace XpsImport
 
 		MString texPathStr(texPath.c_str());
 		fileFn.findPlug("fileTextureName", &status).setString(texPathStr);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(fileTextureName)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		fileFn.findPlug("ignoreColorSpaceFileRules", false).setBool(true);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(ignoreColorSpaceFileRules)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
 		fileFn.findPlug("colorSpace", false).setString(isColorData ? "sRGB" : "Raw");
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(colorSpace)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		static const char* kSame[] = {
 			"coverage", "translateFrame", "rotateFrame", "mirrorU", "mirrorV",
@@ -323,17 +358,47 @@ namespace XpsImport
 
 		MDGModifier wire;
 
-		MPlug outUv = p2dFn.findPlug("outUV");
-		MPlug uvCoord = fileFn.findPlug("uvCoord");
+		MPlug outUv = p2dFn.findPlug("outUV", &status);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(outUV)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		MPlug uvCoord = fileFn.findPlug("uvCoord", &status);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(uvCoord)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		status = wire.connect(outUv, uvCoord);
-		if (!status) return MObject::kNullObj;
+		if (!status)
+		{
+			MGlobal::displayError("wire.connect(outUv, uvCoord) for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
-		MPlug outUvFilter = p2dFn.findPlug("outUvFilterSize");
-		MPlug uvFilter = fileFn.findPlug("uvFilterSize");
+		MPlug outUvFilter = p2dFn.findPlug("outUvFilterSize", &status);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(outUvFilterSize)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		MPlug uvFilter = fileFn.findPlug("uvFilterSize", &status);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(uvFilterSize)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		status = wire.connect(outUvFilter, uvFilter);
-		if (!status) return MObject::kNullObj;
+		if (!status)
+		{
+			MGlobal::displayError("wire.connect(outUvFilter, uvFilter)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
 
 		for (const char* a : kSame)
 		{
@@ -341,10 +406,19 @@ namespace XpsImport
 			MPlug outAttrA = fileFn.findPlug(a, &status);
 
 			status = wire.connect(outUvFilter, uvFilter);
-			if (!status) return MObject::kNullObj;
+			if (!status)
+			{
+				MGlobal::displayError("wire.connect(" + MString(a) + ")  for " + name + " failed!");
+				return MObject::kNullObj;
+			}
 		}
 
-		if (!wire.doIt()) return MObject::kNullObj;
+		if (!wire.doIt())
+		{
+			MGlobal::displayError("wire.doIt for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
 		return fileObj;
 	}
 }
