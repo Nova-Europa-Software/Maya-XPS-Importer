@@ -290,4 +290,61 @@ namespace XpsImport
 
 		return createStatus;
 	}
+
+	MObject XpsFileTranslator::readTexture(const std::string& texPath, bool isColorData, const MString& name)
+	{
+		MStatus status;
+		MDGModifier dg;
+		
+		MObject fileObj = dg.createNode("file", &status);
+		if (!status) return MObject::kNullObj;
+
+		MObject p2dObj = dg.createNode("place2dTexture", &status);
+		if (!status) return MObject::kNullObj;
+
+		status = dg.doIt();
+		if (!status) return MObject::kNullObj;
+
+		MFnDependencyNode fileFn(fileObj), p2dFn(p2dObj);
+		fileFn.setName(name);
+		p2dFn.setName(name + "_p2d");
+
+		MString texPathStr(texPath.c_str());
+		fileFn.findPlug("fileTextureName", &status).setString(texPathStr);
+
+		fileFn.findPlug("ignoreColorSpaceFileRules", false).setBool(true);
+		fileFn.findPlug("colorSpace", false).setString(isColorData ? "sRGB" : "Raw");
+
+		static const char* kSame[] = {
+			"coverage", "translateFrame", "rotateFrame", "mirrorU", "mirrorV",
+			"stagger", "wrapU", "wrapV", "repeatUV", "offset", "rotateUV",
+			"noiseUV", "vertexUvOne", "vertexUvTwo", "vertexUvThree", "vertexCameraOne"
+		};
+
+		MDGModifier wire;
+
+		MPlug outUv = p2dFn.findPlug("outUV");
+		MPlug uvCoord = fileFn.findPlug("uvCoord");
+
+		status = wire.connect(outUv, uvCoord);
+		if (!status) return MObject::kNullObj;
+
+		MPlug outUvFilter = p2dFn.findPlug("outUvFilterSize");
+		MPlug uvFilter = fileFn.findPlug("uvFilterSize");
+
+		status = wire.connect(outUvFilter, uvFilter);
+		if (!status) return MObject::kNullObj;
+
+		for (const char* a : kSame)
+		{
+			MPlug attrA = p2dFn.findPlug(a, &status);
+			MPlug outAttrA = fileFn.findPlug(a, &status);
+
+			status = wire.connect(outUvFilter, uvFilter);
+			if (!status) return MObject::kNullObj;
+		}
+
+		if (!wire.doIt()) return MObject::kNullObj;
+		return fileObj;
+	}
 }

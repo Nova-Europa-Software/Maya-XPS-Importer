@@ -26,5 +26,6 @@ namespace XpsImport
 		MeshVertexData parseVertices(const std::vector<XpsVertex>& verts);
 		MeshIndexData parseIndices(const std::vector<XpsIuVector3>& inds);
 		MStatus createMaterial(const XpsMesh& mesh, const MObject& objMesh);
+		MObject readTexture(const std::string& texPath, bool isColorData, const MString& name);
 	};
 }
