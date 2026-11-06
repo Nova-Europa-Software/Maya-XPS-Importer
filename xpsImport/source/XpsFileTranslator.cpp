@@ -262,6 +262,10 @@ namespace XpsImport
 			MObject diffuseMap = readTexture(mesh.textures[0].file, true, MString(mesh.textures[0].file.c_str()));
 			MFnDependencyNode fileFn(diffuseMap);
 		}
+		else
+		{
+			MGlobal::displayWarning("No textures were assigned to this mesh!");
+		}
 
 		MFnDependencyNode matNode(material);
 		MFnDependencyNode sgNode(shadingGroup);
@@ -418,6 +422,8 @@ namespace XpsImport
 			MGlobal::displayError("wire.doIt for " + name + " failed!");
 			return MObject::kNullObj;
 		}
+
+		MGlobal::displayInfo("Texture " + texPathStr + " read!");
 
 		return fileObj;
 	}
