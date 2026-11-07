@@ -362,59 +362,16 @@ namespace XpsImport
 
 		MDGModifier wire;
 
-		MPlug outUv = p2dFn.findPlug("outUV", &status);
-		if (!status)
-		{
-			MGlobal::displayError("findPlug(outUV)  for " + name + " failed!");
-			return MObject::kNullObj;
-		}
+		if (!connectAttribs(wire, p2dFn, "outUV", fileFn, "uvCoord"))
+			MGlobal::displayError("connectAttribs(outUV, uvCoord)  for " + name + " failed!");
 
-		MPlug uvCoord = fileFn.findPlug("uvCoord", &status);
-		if (!status)
-		{
-			MGlobal::displayError("findPlug(uvCoord)  for " + name + " failed!");
-			return MObject::kNullObj;
-		}
-
-		status = wire.connect(outUv, uvCoord);
-		if (!status)
-		{
-			MGlobal::displayError("wire.connect(outUv, uvCoord) for " + name + " failed!");
-			return MObject::kNullObj;
-		}
-
-		MPlug outUvFilter = p2dFn.findPlug("outUvFilterSize", &status);
-		if (!status)
-		{
-			MGlobal::displayError("findPlug(outUvFilterSize)  for " + name + " failed!");
-			return MObject::kNullObj;
-		}
-
-		MPlug uvFilter = fileFn.findPlug("uvFilterSize", &status);
-		if (!status)
-		{
-			MGlobal::displayError("findPlug(uvFilterSize)  for " + name + " failed!");
-			return MObject::kNullObj;
-		}
-
-		status = wire.connect(outUvFilter, uvFilter);
-		if (!status)
-		{
-			MGlobal::displayError("wire.connect(outUvFilter, uvFilter)  for " + name + " failed!");
-			return MObject::kNullObj;
-		}
+		if(!connectAttribs(wire, p2dFn, "outUvFilterSize", fileFn, "uvFilterSize"))
+			MGlobal::displayError("connectAttribs(outUvFilterSize, uvFilterSize)  for " + name + " failed!");
 
 		for (const char* a : kSame)
 		{
-			MPlug attrA = p2dFn.findPlug(a, &status);
-			MPlug outAttrA = fileFn.findPlug(a, &status);
-
-			status = wire.connect(outUvFilter, uvFilter);
-			if (!status)
-			{
-				MGlobal::displayError("wire.connect(" + MString(a) + ")  for " + name + " failed!");
-				return MObject::kNullObj;
-			}
+			if(!connectAttribs(wire, p2dFn, a, fileFn, a))
+				MGlobal::displayError("connectAttribs(a, a)  for " + name + " failed!");
 		}
 
 		if (!wire.doIt())
@@ -426,5 +383,15 @@ namespace XpsImport
 		MGlobal::displayInfo("Texture " + texPathStr + " read!");
 
 		return fileObj;
+	}
+
+	MStatus XpsFileTranslator::connectAttribs(MDGModifier& dg, const MFnDependencyNode& src, const char* srcAttr, const MFnDependencyNode& dst, const char* dstAttr)
+	{
+		MStatus st;
+		MPlug s = src.findPlug(srcAttr, false, &st);
+		if (!st) return st;
+		MPlug d = dst.findPlug(dstAttr, false, &st);
+		if (!st) return st;
+		return dg.connect(s, d);
 	}
 }
