@@ -257,33 +257,31 @@ namespace XpsImport
 		if (!createStatus)
 			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
 
-		if (!mesh.textures.empty())
-		{
-			MObject diffuseMap = readTexture(mesh.textures[0].file, true, MString(mesh.textures[0].file.c_str()));
-			MFnDependencyNode fileFn(diffuseMap);
-		}
-		else
-		{
-			MGlobal::displayWarning("No textures were assigned to this mesh!");
-		}
-
 		MFnDependencyNode matNode(material);
 		MFnDependencyNode sgNode(shadingGroup);
 
 		sgNode.setName(sgName);
 
-		MPlug outColor = matNode.findPlug("outColor", true, &createStatus);
-		if (!createStatus)
-			MGlobal::displayError("Failed to find outColor plug!");
 
-		MPlug surfaceShader = sgNode.findPlug("surfaceShader", true, &createStatus);
+		if (!mesh.textures.empty())
+		{
+			MObject diffuseMap = readTexture(mesh.textures[0].file, true, MString(mesh.textures[0].file.c_str()));
+			if (!diffuseMap.isNull())
+			{
+				MFnDependencyNode fileFn(diffuseMap);
+				MDGModifier dg2;
+				connectAttribs(dg2, fileFn, "outColor", matNode, "color");
+				dg2.doIt();
+			}
+		}
+		else
+		{
+			MGlobal::displayWarning("No textures were assigned to this mesh!");
+		}
+	
+		createStatus = connectAttribs(dg, matNode, "outColor", sgNode, "surfaceShader");
 		if (!createStatus)
-			MGlobal::displayError("Failed to find outColor plug!");
-
-		createStatus = dg.connect(outColor, surfaceShader);
-		if (!createStatus)
-			MGlobal::displayError("connect failed for mesh " + meshName + " EC = " + createStatus.errorString());
-
+			MGlobal::displayError("connectAttribs(outColor, surfaceShader) failed for mesh " + meshName + " EC = " + createStatus.errorString());
 
 		createStatus = dg.doIt();
 
