@@ -59,7 +59,7 @@ Legned:
 Features
 - Importing geometry - :green_circle:
 - Importing skeleton - :orange_circle:
-- Importing textures - :orange_circle:
-- Importing materials - :red_circle:
+- Importing textures - :orange_circle: (Only diffuse/color maps)
+- Importing materials - :orange_circle:
 - Importing normals - :green_circle:
 - Importing UVs - :green_circle:

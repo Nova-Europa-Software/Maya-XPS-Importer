@@ -25,5 +25,8 @@ namespace XpsImport
 		MIntArray flipFaces(const MIntArray& polygonCounts, const MIntArray& polygonConnects);
 		MeshVertexData parseVertices(const std::vector<XpsVertex>& verts);
 		MeshIndexData parseIndices(const std::vector<XpsIuVector3>& inds);
+		MStatus createMaterial(const XpsMesh& mesh, const MObject& objMesh);
+		MObject readTexture(const std::string& texPath, bool isColorData, const MString& name);
+		MStatus connectAttribs(MDGModifier& dg, const MFnDependencyNode& src, const char* srcAttr, const MFnDependencyNode& dst, const char* dstAttr);
 	};
 }

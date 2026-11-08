@@ -19,6 +19,14 @@
 #include <maya/MGlobal.h>
 #include <maya/MPointArray.h>
 #include <maya/MFloatArray.h>
+#include <maya/MFnPhongShader.h>
+#include <maya/MDGModifier.h>
+#include <maya/MFnSet.h>
+#include <maya/MFnDependencyNode.h>
+#include <maya/MItSelectionList.h>
+#include <maya/MPlug.h>
+#include <maya/MDagPath.h>
+#include <maya/MImage.h>
 
 // XPS default / fallback values
 #define XPS_MAGIC_NUMBER 323232

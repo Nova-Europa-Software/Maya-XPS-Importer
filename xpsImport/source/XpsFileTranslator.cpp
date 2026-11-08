@@ -142,6 +142,8 @@ namespace XpsImport
 			meshFn.assignUVs(mid.uvFaceCounts, flipedUvs, &uvSet.setName);
 		}
 
+		createMaterial(mesh, meshObj);
+
 		return createStatus;
 	}
 
@@ -227,5 +229,167 @@ namespace XpsImport
 		}
 
 		return result;
+	}
+
+	MStatus XpsFileTranslator::createMaterial(const XpsMesh& mesh, const MObject& objMesh)
+	{
+		MStatus createStatus;
+		MString meshName(mesh.name.c_str());
+		std::string materialNameStr = mesh.name + "_mat";
+		std::string shadingGroupStr = mesh.name + "_shg";
+		MString matName(materialNameStr.c_str());
+		MString sgName(shadingGroupStr.c_str());
+
+		MFnPhongShader meshShader;
+		MObject material = meshShader.create();
+
+		meshShader.setName(matName);
+
+		// THIS IS ONLY TEMPORARY TO TEST IF MATERIALS ARE PROPERLY ASSIGNED
+		meshShader.setColor(MColor(1.0f, 0.0f, 0.0f));
+
+		MDGModifier dg;
+		MObject shadingGroup = dg.createNode("shadingEngine", &createStatus);
+		if (!createStatus)
+			MGlobal::displayError("Failed to create shading engine!");
+
+
+		if (!createStatus)
+			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		MFnDependencyNode matNode(material);
+		MFnDependencyNode sgNode(shadingGroup);
+
+		sgNode.setName(sgName);
+
+
+		if (!mesh.textures.empty())
+		{
+			MObject diffuseMap = readTexture(mesh.textures[0].file, true, MString(mesh.textures[0].file.c_str()));
+			if (!diffuseMap.isNull())
+			{
+				MFnDependencyNode fileFn(diffuseMap);
+				MDGModifier dg2;
+				connectAttribs(dg2, fileFn, "outColor", matNode, "color");
+				dg2.doIt();
+			}
+		}
+		else
+		{
+			MGlobal::displayWarning("No textures were assigned to this mesh!");
+		}
+	
+		createStatus = connectAttribs(dg, matNode, "outColor", sgNode, "surfaceShader");
+		if (!createStatus)
+			MGlobal::displayError("connectAttribs(outColor, surfaceShader) failed for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		createStatus = dg.doIt();
+
+		if (!createStatus)
+			MGlobal::displayError("doIt failed for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		MDagPath meshPath;
+		MDagPath::getAPathTo(objMesh, meshPath);
+		meshPath.extendToShape();
+
+		MFnSet sgFn(shadingGroup);
+		createStatus = sgFn.addMember(meshPath);
+		if (!createStatus)
+			MGlobal::displayError("Failed to apply shader for mesh " + meshName + " EC = " + createStatus.errorString());
+
+		return createStatus;
+	}
+
+	MObject XpsFileTranslator::readTexture(const std::string& texPath, bool isColorData, const MString& name)
+	{
+		MStatus status;
+		MDGModifier dg;
+		
+		MObject fileObj = dg.createNode("file", &status);
+		if (!status)
+		{
+			MGlobal::displayError("Creation of file node for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		MObject p2dObj = dg.createNode("place2dTexture", &status);
+		if (!status) 
+		{
+			MGlobal::displayError("Creation of place2dTexture node for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		status = dg.doIt();
+		if (!status)
+		{
+			MGlobal::displayError("doIt for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		MFnDependencyNode fileFn(fileObj), p2dFn(p2dObj);
+		fileFn.setName(name);
+		p2dFn.setName(name + "_p2d");
+
+		MString texPathStr(texPath.c_str());
+		fileFn.findPlug("fileTextureName", &status).setString(texPathStr);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(fileTextureName)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		fileFn.findPlug("ignoreColorSpaceFileRules", false).setBool(true);
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(ignoreColorSpaceFileRules)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		fileFn.findPlug("colorSpace", false).setString(isColorData ? "sRGB" : "Raw");
+		if (!status)
+		{
+			MGlobal::displayError("findPlug(colorSpace)  for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		static const char* kSame[] = {
+			"coverage", "translateFrame", "rotateFrame", "mirrorU", "mirrorV",
+			"stagger", "wrapU", "wrapV", "repeatUV", "offset", "rotateUV",
+			"noiseUV", "vertexUvOne", "vertexUvTwo", "vertexUvThree", "vertexCameraOne"
+		};
+
+		MDGModifier wire;
+
+		if (!connectAttribs(wire, p2dFn, "outUV", fileFn, "uvCoord"))
+			MGlobal::displayError("connectAttribs(outUV, uvCoord)  for " + name + " failed!");
+
+		if(!connectAttribs(wire, p2dFn, "outUvFilterSize", fileFn, "uvFilterSize"))
+			MGlobal::displayError("connectAttribs(outUvFilterSize, uvFilterSize)  for " + name + " failed!");
+
+		for (const char* a : kSame)
+		{
+			if(!connectAttribs(wire, p2dFn, a, fileFn, a))
+				MGlobal::displayError("connectAttribs(a, a)  for " + name + " failed!");
+		}
+
+		if (!wire.doIt())
+		{
+			MGlobal::displayError("wire.doIt for " + name + " failed!");
+			return MObject::kNullObj;
+		}
+
+		MGlobal::displayInfo("Texture " + texPathStr + " read!");
+
+		return fileObj;
+	}
+
+	MStatus XpsFileTranslator::connectAttribs(MDGModifier& dg, const MFnDependencyNode& src, const char* srcAttr, const MFnDependencyNode& dst, const char* dstAttr)
+	{
+		MStatus st;
+		MPlug s = src.findPlug(srcAttr, false, &st);
+		if (!st) return st;
+		MPlug d = dst.findPlug(dstAttr, false, &st);
+		if (!st) return st;
+		return dg.connect(s, d);
 	}
 }

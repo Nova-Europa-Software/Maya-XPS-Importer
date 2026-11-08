@@ -741,6 +741,8 @@ namespace XpsImport
 				textures[j] = tex;
 			}
 
+			mesh.textures = textures;
+
 			// Read vertex count of the mesh
 			uint32_t vertexCount = 0;
 			fileStream.read((char*)&vertexCount, sizeof(uint32_t));
