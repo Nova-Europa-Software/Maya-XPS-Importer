@@ -314,7 +314,7 @@ namespace XpsImport
 		Texture_Type_Emission,
 	};
 
-	struct XpsRndGroupType
+	struct XpsShadingGroupType
 	{
 		/** Name of the render group*/
 		std::string renderGroupName = std::string();
