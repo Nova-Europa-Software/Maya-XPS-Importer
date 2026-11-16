@@ -248,12 +248,17 @@ namespace XpsImport
 
 	MStatus XpsFileTranslator::createMaterial(const XpsMesh& mesh, const MObject& objMesh)
 	{
+		uint32_t requestedShadingGroup = parseShadingGroup(mesh.name);
+
 		MStatus createStatus;
 		MString meshName(mesh.name.c_str());
 		std::string materialNameStr = mesh.name + "_mat";
-		std::string shadingGroupStr = mesh.name + "_shg";
+		std::string shadingEngineStr = mesh.name + "_she";
 		MString matName(materialNameStr.c_str());
-		MString sgName(shadingGroupStr.c_str());
+		MString sgName(shadingEngineStr.c_str());
+		MString shadingGroupStr(std::to_string(requestedShadingGroup).c_str());
+
+		MGlobal::displayInfo("Requested shading group: " + shadingGroupStr);
 
 		MFnPhongShader meshShader;
 		MObject material = meshShader.create();
@@ -264,7 +269,7 @@ namespace XpsImport
 		meshShader.setColor(MColor(1.0f, 0.0f, 0.0f));
 
 		MDGModifier dg;
-		MObject shadingGroup = dg.createNode("shadingEngine", &createStatus);
+		MObject shadingEngine = dg.createNode("shadingEngine", &createStatus);
 		if (!createStatus)
 			MGlobal::displayError("Failed to create shading engine!");
 
@@ -273,7 +278,7 @@ namespace XpsImport
 			MGlobal::displayError("Failed to create shading group for mesh " + meshName + " EC = " + createStatus.errorString());
 
 		MFnDependencyNode matNode(material);
-		MFnDependencyNode sgNode(shadingGroup);
+		MFnDependencyNode sgNode(shadingEngine);
 
 		sgNode.setName(sgName);
 
@@ -307,7 +312,7 @@ namespace XpsImport
 		MDagPath::getAPathTo(objMesh, meshPath);
 		meshPath.extendToShape();
 
-		MFnSet sgFn(shadingGroup);
+		MFnSet sgFn(shadingEngine);
 		createStatus = sgFn.addMember(meshPath);
 		if (!createStatus)
 			MGlobal::displayError("Failed to apply shader for mesh " + meshName + " EC = " + createStatus.errorString());
@@ -406,5 +411,38 @@ namespace XpsImport
 		MPlug d = dst.findPlug(dstAttr, false, &st);
 		if (!st) return st;
 		return dg.connect(s, d);
+	}
+
+	uint32_t XpsFileTranslator::parseShadingGroup(const std::string& meshName)
+	{
+		std::string shadingGroupStr = std::string();
+
+		for (char c : meshName)
+		{
+			if (isdigit(c))
+			{
+				shadingGroupStr += c;
+			}
+			else
+			{
+				break;
+			}
+		}
+
+		try
+		{
+			return std::stoi(shadingGroupStr.c_str());
+		}
+		catch (const std::exception&)
+		{
+			MGlobal::displayError("Failed to convert shading group number: " + MString(shadingGroupStr.c_str()) + " from string to unsigned integer!");
+			return 0;
+		}
+
+	}
+
+	MStatus XpsFileTranslator::createMaterialFromShadingGroup(const XpsMesh& mesh, const MObject& objMesh, const uint32_t& shadingGroup)
+	{
+		return MStatus();
 	}
 }

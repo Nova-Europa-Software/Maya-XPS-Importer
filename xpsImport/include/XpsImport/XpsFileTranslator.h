@@ -29,5 +29,7 @@ namespace XpsImport
 		MStatus createMaterial(const XpsMesh& mesh, const MObject& objMesh);
 		MObject readTexture(const std::string& texPath, bool isColorData, const MString& name);
 		MStatus connectAttribs(MDGModifier& dg, const MFnDependencyNode& src, const char* srcAttr, const MFnDependencyNode& dst, const char* dstAttr);
+		uint32_t parseShadingGroup(const std::string& meshName);
+		MStatus createMaterialFromShadingGroup(const XpsMesh& mesh, const MObject& objMesh, const uint32_t& shadingGroup);
 	};
 }
