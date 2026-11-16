@@ -300,4 +300,41 @@ namespace XpsImport
 		/** Number of UV layers used by the mesh */
 		size_t uvCount = 0; 
 	};
+
+	enum class TextureType
+	{
+		Texture_Type_Diffuse,
+		Texture_Type_Light,
+		Texture_Type_Bump,
+		Texture_Type_Mask,
+		Texture_Type_Bump1,
+		Texture_Type_Bump2,
+		Texture_Type_Specular,
+		Texture_Type_Environment,
+		Texture_Type_Emission,
+	};
+
+	struct XpsRndGroupType
+	{
+		/** Name of the render group*/
+		std::string renderGroupName = std::string();
+		/** Whether the object with this group shoud be shaded */
+		bool hasShading = false;
+		/** Whether the object with this group utilize alpha channel */
+		bool hasAlpha = false;
+		/** Whether the object with this group are poseable */
+		bool isPosable = true;
+		/** Whether the object with this group have specular data */
+		bool hasSpecular = true;
+		/** Wether the shading group utilizes additional bump map */
+		bool bump1Reg = true;
+		/** Wether the shading group utilizes additional bump map */
+		bool bump2Reg = true;
+		/** Wether the shading group utilizes additional specular map */
+		bool spec1Reg = true;
+		/** Number of texture maps utilized in this shading group */
+		size_t texCount = 0;
+		/** Vector holding texture types for all maps in this shading group */
+		std::vector<TextureType> texTypes = std::vector<TextureType>();
+	};
 }
