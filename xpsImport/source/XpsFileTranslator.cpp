@@ -153,28 +153,37 @@ namespace XpsImport
 
 		size_t currentVertId = 0;
 
+		// Allocate memory for all UVs
 		result.uvDataVec.resize(verts[0].uv.size());
 
+		// Loop through each UV layer
 		for (size_t i = 0; i < result.uvDataVec.size(); i++)
 		{
+			// Assign uv set name (map + layer)
 			std::string rawSetName = "map" + std::to_string(i+1);
 
 			MString setName = MString(rawSetName.c_str());
 
+			// Save layer
 			result.uvDataVec[i].setName = setName;
 		}
 
+		// Loop through each vertex
 		for (auto& vertex : verts)
 		{
+			// Append position data
 			result.positionArray.append(vertex.coordDelta.x, vertex.coordDelta.y, vertex.coordDelta.z);
 
+			// Append normal data
 			MVector n(vertex.normal.x, vertex.normal.y, vertex.normal.z);
 			result.normalArray.append(n);
 
+			// Append uv data for each layer
 			size_t currentUvSet = 0;
 			for (auto& uv : vertex.uv)
 			{
 				result.uvDataVec[currentUvSet].uArray.append(uv.x);
+				// Flip Y axis
 				result.uvDataVec[currentUvSet].vArray.append(1-uv.y);
 				currentUvSet++;
 			}
@@ -190,11 +199,14 @@ namespace XpsImport
 	{
 		MeshIndexData result = {};
 
+		// Loop through all indices
 		for (auto& index : inds)
 		{
+			// Make sure that index data is not garbage
 #ifdef _DEBUG
 			if (index.x == 0 && index.y == 0 && index.z == 0)
 			{
+				// If it is print warning message (debug build only)
 				MGlobal::displayWarning("Ghost face encountered!");
 				continue;
 			}
@@ -202,21 +214,24 @@ namespace XpsImport
 			if (index.x == 0 && index.y == 0 && index.z == 0)
 				continue;
 #endif
-
+			// Append info of 3 new indices
 			result.polygonCounts.append(3);
 
+			// Append index data
 			result.polygonConnects.append(index.x);
 			result.polygonConnects.append(index.y);
 			result.polygonConnects.append(index.z);
 		}
 
 #ifdef _DEBUG
+		// (debug build only) ensure that number of expected indices actually matches provided data
 		if (result.polygonCounts.length() * 3 != result.polygonConnects.length())
 			MGlobal::displayError("polygonCounts / polygonConnects mismatch detected!");
 #endif
 
 		int faceIndex = 0;
 
+		// Append UV data onto loaded indices
 		for (size_t i = 0; i < result.polygonCounts.length(); i++)
 		{
 			result.uvFaceCounts.append(result.polygonCounts[i]);

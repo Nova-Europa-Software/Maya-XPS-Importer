@@ -2,6 +2,7 @@
 #include "XpsCore.h"
 #include "XpsBinUtils.h"
 #include "IntermediateTypes.h"
+#include "XpsShadingGroups.h"
 
 namespace XpsImport
 {

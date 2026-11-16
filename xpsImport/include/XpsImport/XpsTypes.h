@@ -337,4 +337,6 @@ namespace XpsImport
 		/** Vector holding texture types for all maps in this shading group */
 		std::vector<TextureType> texTypes = std::vector<TextureType>();
 	};
+
+	
 }
